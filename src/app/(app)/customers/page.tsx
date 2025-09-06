@@ -57,8 +57,8 @@ export default function CustomersPage() {
 
   return (
     <>
-      <div className="grid gap-6 lg:grid-cols-5">
-        <div className="lg:col-span-3">
+      <div className="grid gap-6 md:grid-cols-5">
+        <div className="md:col-span-3">
           <Card>
             <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
@@ -71,28 +71,30 @@ export default function CustomersPage() {
               </Button>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Phone</TableHead>
-                    <TableHead className="text-right">Joined</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {customers.map((customer) => (
-                    <TableRow key={customer.id}>
-                      <TableCell className="font-medium">{customer.name}</TableCell>
-                      <TableCell>{customer.phone}</TableCell>
-                      <TableCell className="text-right">{customer.joined}</TableCell>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Phone</TableHead>
+                      <TableHead className="text-right">Joined</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {customers.map((customer) => (
+                      <TableRow key={customer.id}>
+                        <TableCell className="font-medium">{customer.name}</TableCell>
+                        <TableCell>{customer.phone}</TableCell>
+                        <TableCell className="text-right">{customer.joined}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             </CardContent>
           </Card>
         </div>
-        <div className="lg:col-span-2">
+        <div className="md:col-span-2">
           <Card>
             <CardHeader>
               <CardTitle>Customer Engagement</CardTitle>

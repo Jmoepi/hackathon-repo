@@ -47,7 +47,7 @@ export default function PaymentsPage() {
   const form = useForm<z.infer<typeof paymentSchema>>({
     resolver: zodResolver(paymentSchema),
     defaultValues: {
-      amount: '' as any,
+      amount: '',
     },
   });
 
@@ -78,7 +78,7 @@ export default function PaymentsPage() {
 
   return (
     <>
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle>Generate Payment QR</CardTitle>
@@ -123,24 +123,26 @@ export default function PaymentsPage() {
             <CardDescription>A log of your most recent digital payments.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Time</TableHead>
-                  <TableHead className="text-right">Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {transactions.slice(0, 5).map((txn) => (
-                  <TableRow key={txn.id}>
-                    <TableCell className="font-medium">R{txn.amount.toFixed(2)}</TableCell>
-                    <TableCell>{new Date(txn.date).toLocaleTimeString()}</TableCell>
-                    <TableCell className="text-right text-primary font-semibold">{txn.status}</TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Time</TableHead>
+                    <TableHead className="text-right">Status</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {transactions.slice(0, 5).map((txn) => (
+                    <TableRow key={txn.id}>
+                      <TableCell className="font-medium">R{txn.amount.toFixed(2)}</TableCell>
+                      <TableCell>{new Date(txn.date).toLocaleTimeString()}</TableCell>
+                      <TableCell className="text-right text-primary font-semibold">{txn.status}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
       </div>
