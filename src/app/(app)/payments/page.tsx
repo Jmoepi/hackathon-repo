@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useShop } from '@/context/ShopContext';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -32,7 +32,9 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import QrCodeDialog from './components/qr-code-dialog';
+import dynamic from 'next/dynamic';
+const QrCodeDialog = dynamic(() => import('./components/qr-code-dialog'), { ssr: false });
+import { Skeleton } from '@/components/ui/skeleton';
 
 const paymentSchema = z.object({
   amount: z.coerce.number().positive({ message: 'Amount must be positive.' }),
@@ -40,7 +42,8 @@ const paymentSchema = z.object({
 
 // ✅ Exported Page Component
 export default function PaymentsPage() {
-  const { transactions, sellProduct } = useShop();
+  const [loading, setLoading] = useState(true);
+  const { transactions, sellProduct } = useShop() || {};
   const [isQrOpen, setIsQrOpen] = useState(false);
   const [qrAmount, setQrAmount] = useState(0);
   const [selectedProductId, setSelectedProductId] = useState('prod-001');
@@ -52,6 +55,11 @@ export default function PaymentsPage() {
       amount: 0,
     },
   });
+
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 1200);
+    return () => clearTimeout(timer);
+  }, []);
 
   function onSubmit(values: z.infer<typeof paymentSchema>) {
     setQrAmount(values.amount);
@@ -67,6 +75,16 @@ export default function PaymentsPage() {
       });
       form.reset();
     }, 5000);
+  }
+
+  // If loading or context is missing, show skeletons
+  if (loading || !transactions) {
+    return (
+      <div className="grid gap-6 md:grid-cols-2">
+        <Skeleton className="h-64 w-full mb-4" />
+        <Skeleton className="h-64 w-full mb-4" />
+      </div>
+    );
   }
 
   return (

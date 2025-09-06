@@ -1,14 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useShop } from "@/context/ShopContext";
 import {
   Table,
-  TableHeader,
-  TableRow,
-  TableHead,
-  TableBody,
-  TableCell,
+  TableHeader,   // thead
+  TableRow,        // tr
+  TableHead,       // th
+  TableBody,       // tbody
+  TableCell,       // td
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,7 +26,6 @@ import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-// If you have a Product type exported elsewhere, import it instead:
 type Product = {
   id: string;
   name: string;
@@ -36,20 +35,19 @@ type Product = {
 };
 
 export default function InventoryPage() {
-  // Pull products from your context
   const { products } = useShop();
-
-  // Local UI state
+  const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [stockStatusFilter, setStockStatusFilter] = useState<"all" | "low" | "out">("all");
+  const [stockStatusFilter, setStockStatusFilter] =
+    useState<"all" | "low" | "out">("all");
 
-  // OPTIONAL: keep a local copy to demo stock changes without wiring context updates
   const [localProducts, setLocalProducts] = useState<Product[]>(products);
 
-  // Keep local in sync if context changes (optional)
-  // You can remove this if you plan to update context directly
-  // useEffect(() => setLocalProducts(products), [products]);
+  useEffect(() => {
+    const t = setTimeout(() => setLoading(false), 1200);
+    return () => clearTimeout(t);
+  }, []);
 
   const lowStockProducts = useMemo(
     () => localProducts.filter((p) => p.stock > 0 && p.stock < p.lowStockThreshold),
@@ -60,16 +58,13 @@ export default function InventoryPage() {
     const bySearch = localProducts.filter((p) =>
       p.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
-    if (stockStatusFilter === "low") return bySearch.filter((p) => p.stock > 0 && p.stock < p.lowStockThreshold);
+    if (stockStatusFilter === "low")
+      return bySearch.filter((p) => p.stock > 0 && p.stock < p.lowStockThreshold);
     if (stockStatusFilter === "out") return bySearch.filter((p) => p.stock === 0);
     return bySearch;
   }, [localProducts, searchTerm, stockStatusFilter]);
 
-  // Handlers (all BEFORE return)
-
   const handleStockChange = (id: string, delta: number) => {
-    // Demo-only local update. If you have a context method (e.g., updateProductStock),
-    // call that instead and remove local state.
     setLocalProducts((curr) =>
       curr.map((p) =>
         p.id === id ? { ...p, stock: Math.max(0, p.stock + delta) } : p
@@ -78,7 +73,6 @@ export default function InventoryPage() {
   };
 
   const handleAddProduct = (product: { name: string; stock: number; price: number }) => {
-    // Demo-only: add with generated id & default lowStockThreshold
     setLocalProducts((curr) => [
       ...curr,
       {
@@ -86,7 +80,7 @@ export default function InventoryPage() {
         name: product.name,
         stock: product.stock,
         price: product.price,
-        lowStockThreshold: 3, // tweak as you like
+        lowStockThreshold: 3,
       },
     ]);
     setIsDialogOpen(false);
@@ -120,12 +114,8 @@ export default function InventoryPage() {
                     {lowStockProducts.length === 0
                       ? Array.from({ length: 3 }).map((_, i) => (
                           <TableRow key={i}>
-                            <TableCell>
-                              <Skeleton className="h-4 w-24" />
-                            </TableCell>
-                            <TableCell>
-                              <Skeleton className="h-4 w-12" />
-                            </TableCell>
+                            <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                            <TableCell><Skeleton className="h-4 w-12" /></TableCell>
                           </TableRow>
                         ))
                       : lowStockProducts.map((product) => (
@@ -190,9 +180,7 @@ export default function InventoryPage() {
                     filteredProducts.map((product) => (
                       <TableRow key={product.id}>
                         <TableCell className="font-medium">{product.name}</TableCell>
-                        <TableCell className="text-right">
-                          R{product.price.toFixed(2)}
-                        </TableCell>
+                        <TableCell className="text-right">R{product.price.toFixed(2)}</TableCell>
                         <TableCell>
                           <div className="flex items-center justify-center gap-2">
                             <span
@@ -209,13 +197,11 @@ export default function InventoryPage() {
                             </span>
                             {product.stock === 0 ? (
                               <Badge variant="destructive">Out</Badge>
-                            ) : (
-                              product.stock < product.lowStockThreshold && (
-                                <Badge className="bg-amber-500 text-white hover:bg-amber-500/80">
-                                  Low
-                                </Badge>
-                              )
-                            )}
+                            ) : product.stock < product.lowStockThreshold ? (
+                              <Badge className="bg-amber-500 text-white hover:bg-amber-500/80">
+                                Low
+                              </Badge>
+                            ) : null}
                           </div>
                         </TableCell>
                         <TableCell className="text-right">

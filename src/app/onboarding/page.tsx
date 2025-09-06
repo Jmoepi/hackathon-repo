@@ -18,7 +18,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, LayoutDashboard, Boxes, QrCode, Users } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
-
+import streetVendorImg from '@/image/Street Vendor and Modern Payment Interaction (1).png';
+import inventoryimg from '@/image/inventory.png'
 const onboardingSteps = [
   {
     icon: LayoutDashboard,
@@ -26,13 +27,6 @@ const onboardingSteps = [
     description: "Your all-in-one toolkit for managing your small business with ease. Let's get you started.",
     image: 'https://picsum.photos/800/600',
     dataAiHint: 'welcome business',
-  },
-  {
-    icon: LayoutDashboard,
-    title: 'Powerful Dashboard',
-    description: 'Get a real-time overview of your sales, transactions, and stock levels. Make data-driven decisions.',
-    image: 'https://picsum.photos/800/600',
-    dataAiHint: 'dashboard charts',
   },
   {
     icon: Boxes,
