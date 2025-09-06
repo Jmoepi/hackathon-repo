@@ -1,3 +1,5 @@
+
+import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -55,16 +57,18 @@ export default function DashboardPage() {
             <p className="text-xs text-muted-foreground">+10.1% from yesterday</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Low Stock Alerts</CardTitle>
-            <AlertCircle className="h-4 w-4 text-destructive" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{lowStockItems}</div>
-            <p className="text-xs text-muted-foreground">Items need restocking</p>
-          </CardContent>
-        </Card>
+        <Link href="/inventory" className="cursor-pointer">
+            <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Low Stock Alerts</CardTitle>
+                <AlertCircle className="h-4 w-4 text-destructive" />
+            </CardHeader>
+            <CardContent>
+                <div className="text-2xl font-bold">{lowStockItems}</div>
+                <p className="text-xs text-muted-foreground">Items need restocking</p>
+            </CardContent>
+            </Card>
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
