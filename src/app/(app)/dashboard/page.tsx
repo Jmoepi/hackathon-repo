@@ -23,7 +23,7 @@ import { Badge } from "@/components/ui/badge";
 export default function DashboardPage() {
   const dailyRevenue = 1250.75;
   const transactions = 42;
-  const lowStockItems = initialProducts.filter(p => p.stock < p.lowStockThreshold).length;
+  const lowStockItems = initialProducts.filter(p => p.stock > 0 && p.stock < p.lowStockThreshold).length;
 
   const bestSellers = [...initialProducts].sort((a, b) => b.unitsSold - a.unitsSold).slice(0, 3);
   
@@ -58,10 +58,10 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
         <Link href="/inventory" className="cursor-pointer">
-            <Card>
+            <Card className="hover:border-amber-500">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Low Stock Alerts</CardTitle>
-                <AlertCircle className="h-4 w-4 text-destructive" />
+                <AlertCircle className="h-4 w-4 text-amber-500" />
             </CardHeader>
             <CardContent>
                 <div className="text-2xl font-bold">{lowStockItems}</div>
@@ -111,31 +111,34 @@ export default function DashboardPage() {
       <Card>
         <CardHeader>
             <div className="flex items-center gap-2">
-                <Star className="h-5 w-5 text-accent"/>
+                <Star className="h-5 w-5 text-amber-500"/>
                 <CardTitle>Best-Selling Products</CardTitle>
             </div>
             <CardDescription>Your top-performing items this month.</CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Product</TableHead>
-                <TableHead className="text-right">Units Sold</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {bestSellers.map((product, index) => (
-                <TableRow key={product.id}>
-                  <TableCell className="font-medium flex items-center gap-3">
-                    <Badge variant="outline" className="text-lg">{index + 1}</Badge>
-                    {product.name}
-                  </TableCell>
-                  <TableCell className="text-right font-bold">{product.unitsSold}</TableCell>
+          <div className="overflow-x-auto rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[80px]">Rank</TableHead>
+                  <TableHead>Product</TableHead>
+                  <TableHead className="text-right">Units Sold</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {bestSellers.map((product, index) => (
+                  <TableRow key={product.id}>
+                    <TableCell className="font-medium">
+                      <Badge className="text-lg bg-amber-100 text-amber-700 border-amber-300 hover:bg-amber-100">{index + 1}</Badge>
+                    </TableCell>
+                    <TableCell className="font-medium">{product.name}</TableCell>
+                    <TableCell className="text-right font-bold">{product.unitsSold}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>
