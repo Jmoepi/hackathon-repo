@@ -1,3 +1,4 @@
+"use client";
 
 import Link from "next/link";
 import {
@@ -16,19 +17,21 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { DollarSign, AlertCircle, ShoppingCart, Users, Star, TrendingUp } from "lucide-react";
-import { initialProducts, weeklySalesData, initialTransactions, initialCustomers } from "@/lib/data";
+import { weeklySalesData, initialCustomers } from "@/lib/data";
+import { useShop } from '@/context/ShopContext';
 import SalesChart from "./components/sales-chart";
 import { Badge } from "@/components/ui/badge";
 
-export default function DashboardPage() {
-  const dailyRevenue = 1250.75;
-  const transactions = 42;
-  const lowStockItems = initialProducts.filter(p => p.stock > 0 && p.stock < p.lowStockThreshold).length;
+const DashboardPage = () => {
+  const { products, transactions } = useShop();
+  const dailyRevenue = transactions.length > 0 ? transactions[0].amount : 0;
+  const transactionCount = transactions.length;
+  const lowStockItems = products.filter(p => p.stock > 0 && p.stock < p.lowStockThreshold).length;
 
-  const bestSellers = [...initialProducts].sort((a, b) => b.unitsSold - a.unitsSold).slice(0, 3);
-  
-  const totalRevenue = initialTransactions.reduce((acc, txn) => acc + txn.amount, 0);
-  const averageTransactionValue = totalRevenue / initialTransactions.length;
+  const bestSellers = [...products].sort((a, b) => b.unitsSold - a.unitsSold).slice(0, 3);
+
+  const totalRevenue = transactions.reduce((acc, txn) => acc + txn.amount, 0);
+  const averageTransactionValue = transactionCount > 0 ? totalRevenue / transactionCount : 0;
 
   const oneWeekAgo = new Date();
   oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
@@ -53,7 +56,7 @@ export default function DashboardPage() {
             <ShoppingCart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+{transactions}</div>
+            <div className="text-2xl font-bold">+{transactionCount}</div>
             <p className="text-xs text-muted-foreground">+10.1% from yesterday</p>
           </CardContent>
         </Card>
@@ -143,4 +146,6 @@ export default function DashboardPage() {
       </Card>
     </div>
   );
-}
+};
+
+export default DashboardPage;

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from 'react';
+import { useShop } from '@/context/ShopContext';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -21,7 +22,6 @@ import {
   CardDescription,
 } from '@/components/ui/card';
 import { QrCode, DollarSign } from 'lucide-react';
-import { initialTransactions, type Transaction } from '@/lib/data';
 import { Input } from '@/components/ui/input';
 import {
   Form,
@@ -38,51 +38,47 @@ const paymentSchema = z.object({
   amount: z.coerce.number().positive({ message: 'Amount must be positive.' }),
 });
 
+// ✅ Exported Page Component
 export default function PaymentsPage() {
-  const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
+  const { transactions, sellProduct } = useShop();
   const [isQrOpen, setIsQrOpen] = useState(false);
   const [qrAmount, setQrAmount] = useState(0);
+  const [selectedProductId, setSelectedProductId] = useState('prod-001');
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof paymentSchema>>({
     resolver: zodResolver(paymentSchema),
     defaultValues: {
-      amount: '',
+      amount: 0,
     },
   });
 
   function onSubmit(values: z.infer<typeof paymentSchema>) {
     setQrAmount(values.amount);
     setIsQrOpen(true);
-    // In a real app, we'd wait for a payment confirmation callback.
-    // Here we'll simulate it after a delay.
     setTimeout(() => {
-        const newTransaction: Transaction = {
-            id: `txn-${Date.now()}`,
-            amount: values.amount,
-            date: new Date().toISOString(),
-            customer: 'Unknown',
-            status: 'Completed',
-        };
-        setTransactions(prev => [newTransaction, ...prev]);
-        setIsQrOpen(false);
-        toast({
-            title: "Payment Received!",
-            description: `Successfully received R${values.amount.toFixed(2)}.`,
-            variant: "default",
-            className: "bg-primary text-primary-foreground border-primary",
-        });
-        form.reset();
+      sellProduct(selectedProductId, values.amount);
+      setIsQrOpen(false);
+      toast({
+        title: "Payment Received!",
+        description: `Successfully received R${values.amount.toFixed(2)} for White Bread.`,
+        variant: "default",
+        className: "bg-primary text-primary-foreground border-primary",
+      });
+      form.reset();
     }, 5000);
   }
 
   return (
     <>
       <div className="grid gap-6 md:grid-cols-2">
+        {/* Generate Payment QR */}
         <Card>
           <CardHeader>
             <CardTitle>Generate Payment QR</CardTitle>
-            <CardDescription>Enter an amount to generate a unique QR code for payment.</CardDescription>
+            <CardDescription>
+              Enter an amount to generate a unique QR code for payment.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>
@@ -92,14 +88,14 @@ export default function PaymentsPage() {
                   name="amount"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Amount (R)</FormLabel>
+                      <FormLabel>Amount</FormLabel>
                       <div className="relative">
-                        <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center justify-center h-6 w-6 text-muted-foreground font-bold">R</span>
                         <FormControl>
                           <Input
                             type="number"
                             step="0.01"
-                            placeholder="55.50"
+                            placeholder="15.50"
                             className="pl-8"
                             {...field}
                           />
@@ -117,6 +113,8 @@ export default function PaymentsPage() {
             </Form>
           </CardContent>
         </Card>
+
+        {/* Recent Transactions */}
         <Card>
           <CardHeader>
             <CardTitle>Recent Transactions</CardTitle>
@@ -137,7 +135,9 @@ export default function PaymentsPage() {
                     <TableRow key={txn.id}>
                       <TableCell className="font-medium">R{txn.amount.toFixed(2)}</TableCell>
                       <TableCell>{new Date(txn.date).toLocaleTimeString()}</TableCell>
-                      <TableCell className="text-right text-primary font-semibold">{txn.status}</TableCell>
+                      <TableCell className="text-right text-primary font-semibold">
+                        {txn.status}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -146,6 +146,8 @@ export default function PaymentsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* QR Dialog */}
       <QrCodeDialog
         isOpen={isQrOpen}
         onOpenChange={setIsQrOpen}

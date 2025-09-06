@@ -1,11 +1,14 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
+import ThemeToggle from '@/components/ui/theme-toggle';
 
 export const metadata: Metadata = {
   title: 'Township Trader Toolkit',
   description: 'A digital toolkit for small-scale business owners.',
 };
+
+import ShopProviderWrapper from './ShopProviderWrapper';
 
 export default function RootLayout({
   children,
@@ -23,8 +26,11 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased">
-        {children}
-        <Toaster />
+        <ShopProviderWrapper>
+          {children}
+          <ThemeToggle />
+          <Toaster />
+        </ShopProviderWrapper>
       </body>
     </html>
   );
