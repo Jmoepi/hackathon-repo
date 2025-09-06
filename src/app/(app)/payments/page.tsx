@@ -47,7 +47,7 @@ export default function PaymentsPage() {
   const form = useForm<z.infer<typeof paymentSchema>>({
     resolver: zodResolver(paymentSchema),
     defaultValues: {
-      amount: undefined,
+      amount: '' as any,
     },
   });
 
