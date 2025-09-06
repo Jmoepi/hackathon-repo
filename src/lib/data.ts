@@ -4,6 +4,7 @@ export type Product = {
   stock: number;
   price: number;
   lowStockThreshold: number;
+  unitsSold: number;
 };
 
 export type Transaction = {
@@ -22,13 +23,13 @@ export type Customer = {
 };
 
 export const initialProducts: Product[] = [
-  { id: 'prod-001', name: 'White Bread', stock: 25, price: 18.50, lowStockThreshold: 10 },
-  { id: 'prod-002', name: 'Brown Bread', stock: 8, price: 19.00, lowStockThreshold: 10 },
-  { id: 'prod-003', name: '2L Milk', stock: 15, price: 32.00, lowStockThreshold: 5 },
-  { id: 'prod-004', name: 'Amasi 1L', stock: 4, price: 25.50, lowStockThreshold: 5 },
-  { id: 'prod-005', name: 'Eggs (6 pack)', stock: 30, price: 22.00, lowStockThreshold: 12 },
-  { id: 'prod-006', name: 'Coca-Cola 2L', stock: 40, price: 28.00, lowStockThreshold: 15 },
-  { id: 'prod-007', name: 'Simba Chips (Large)', stock: 12, price: 19.99, lowStockThreshold: 10 },
+  { id: 'prod-001', name: 'White Bread', stock: 25, price: 18.50, lowStockThreshold: 10, unitsSold: 150 },
+  { id: 'prod-002', name: 'Brown Bread', stock: 8, price: 19.00, lowStockThreshold: 10, unitsSold: 95 },
+  { id: 'prod-003', name: '2L Milk', stock: 15, price: 32.00, lowStockThreshold: 5, unitsSold: 200 },
+  { id: 'prod-004', name: 'Amasi 1L', stock: 4, price: 25.50, lowStockThreshold: 5, unitsSold: 80 },
+  { id: 'prod-005', name: 'Eggs (6 pack)', stock: 30, price: 22.00, lowStockThreshold: 12, unitsSold: 120 },
+  { id: 'prod-006', name: 'Coca-Cola 2L', stock: 40, price: 28.00, lowStockThreshold: 15, unitsSold: 250 },
+  { id: 'prod-007', name: 'Simba Chips (Large)', stock: 12, price: 19.99, lowStockThreshold: 10, unitsSold: 180 },
 ];
 
 export const initialTransactions: Transaction[] = [
@@ -42,7 +43,7 @@ export const initialCustomers: Customer[] = [
     { id: 'C-001', name: 'Thabo Mbeki', phone: '082 123 4567', joined: '2023-01-15' },
     { id: 'C-002', name: 'Sipho Ndlovu', phone: '073 890 1234', joined: '2023-02-20' },
     { id: 'C-003', name: 'Lerato Zulu', phone: '084 567 8901', joined: '2023-03-05' },
-    { id: 'C-004', name: 'Naledi Khumalo', phone: '061 234 5678', joined: '2023-05-10' },
+    { id: 'C-004', name: 'Naledi Khumalo', phone: '061 234 5678', joined: new Date().toISOString().split('T')[0] },
 ];
 
 export const weeklySalesData = [
