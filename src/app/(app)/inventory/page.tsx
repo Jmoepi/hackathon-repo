@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Plus, Minus, PlusCircle, AlertTriangle, Search } from 'lucide-react';
 import { initialProducts, type Product } from '@/lib/data';
+import { Skeleton } from '@/components/ui/skeleton';
 import AddProductDialog from './components/add-product-dialog';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -81,12 +82,19 @@ export default function InventoryPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {lowStockProducts.map((product) => (
-                      <TableRow key={product.id}>
-                        <TableCell className="font-medium">{product.name}</TableCell>
-                        <TableCell className="text-right font-bold">{product.stock}</TableCell>
-                      </TableRow>
-                    ))}
+                    {lowStockProducts.length === 0
+                      ? Array.from({ length: 3 }).map((_, i) => (
+                          <TableRow key={i}>
+                            <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                            <TableCell><Skeleton className="h-4 w-12" /></TableCell>
+                          </TableRow>
+                        ))
+                      : lowStockProducts.map((product) => (
+                          <TableRow key={product.id}>
+                            <TableCell className="font-medium">{product.name}</TableCell>
+                            <TableCell className="text-right font-bold">{product.stock}</TableCell>
+                          </TableRow>
+                        ))}
                   </TableBody>
                 </Table>
               </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Boxes, QrCode, Users } from 'lucide-react';
@@ -7,6 +8,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  SidebarContext,
 } from '@/components/ui/sidebar';
 
 const navItems = [
@@ -19,6 +21,14 @@ const navItems = [
 export default function SidebarNav() {
   const pathname = usePathname();
 
+  // Access sidebar context to close on navigation
+  const sidebarCtx = React.useContext(SidebarContext);
+  const handleNavClick = () => {
+    if (sidebarCtx && sidebarCtx.isMobile) {
+      sidebarCtx.setOpenMobile(false);
+    }
+  };
+
   return (
     <SidebarMenu>
       {navItems.map((item) => (
@@ -28,7 +38,7 @@ export default function SidebarNav() {
             isActive={pathname === item.href}
             tooltip={item.label}
           >
-            <Link href={item.href}>
+            <Link href={item.href} onClick={handleNavClick}>
               <item.icon />
               <span>{item.label}</span>
             </Link>

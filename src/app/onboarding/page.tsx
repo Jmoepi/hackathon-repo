@@ -1,7 +1,8 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -13,6 +14,7 @@ import {
   type CarouselApi,
 } from '@/components/ui/carousel';
 import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, LayoutDashboard, Boxes, QrCode, Users } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
@@ -56,20 +58,19 @@ const onboardingSteps = [
 ];
 
 export default function OnboardingPage() {
+  const router = useRouter();
   const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
 
-  useState(() => {
-    if (!api) {
-      return;
-    }
-
+  useEffect(() => {
+    if (!api) return;
     setCurrent(api.selectedScrollSnap());
-
     api.on('select', () => {
       setCurrent(api.selectedScrollSnap());
     });
-  });
+  }, [api]);
+
+  // Remove timed redirect; will redirect on button click instead
 
   const progress = ((current + 1) / onboardingSteps.length) * 100;
 
@@ -105,14 +106,16 @@ export default function OnboardingPage() {
               <Card className="overflow-hidden">
                 <CardContent className="flex flex-col items-center justify-center p-0 text-center">
                   <div className="relative w-full h-48 md:h-64">
+                    <Skeleton className="absolute inset-0 w-full h-full" />
                     <Image
                       src={step.image}
                       alt={step.title}
                       fill
                       className="object-cover"
                       data-ai-hint={step.dataAiHint}
+                      onLoad={e => e.currentTarget.previousSibling?.remove()}
                     />
-                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                   </div>
                   <div className="p-6 space-y-3">
                     <step.icon className="w-10 h-10 mx-auto text-primary" />
@@ -132,10 +135,8 @@ export default function OnboardingPage() {
         <Progress value={progress} className="h-2" />
 
         {current === onboardingSteps.length - 1 ? (
-          <Button asChild className="w-full">
-            <Link href="/dashboard">
-              Get Started <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
+          <Button className="w-full" onClick={() => router.push('/dashboard')}>
+            Get Started <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         ) : (
            <div className="flex justify-center md:hidden">
