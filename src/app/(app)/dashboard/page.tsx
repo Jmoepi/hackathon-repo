@@ -64,15 +64,15 @@ const DashboardPage = () => {
   const newCustomersThisWeek = initialCustomers.filter(c => new Date(c.joined) >= oneWeekAgo).length;
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+  <div className="flex flex-col gap-6 min-w-0">
+  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 min-w-0">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Daily Revenue</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">R{dailyRevenue.toFixed(2)}</div>
+            <div className="text-2xl md:text-3xl font-bold">R{dailyRevenue.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">+5.2% from yesterday</p>
           </CardContent>
         </Card>
@@ -82,7 +82,7 @@ const DashboardPage = () => {
             <ShoppingCart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+{transactionCount}</div>
+            <div className="text-2xl md:text-3xl font-bold">+{transactionCount}</div>
             <p className="text-xs text-muted-foreground">+10.1% from yesterday</p>
           </CardContent>
         </Card>
@@ -93,15 +93,15 @@ const DashboardPage = () => {
               <AlertCircle className="h-4 w-4 text-amber-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{lowStockItems}</div>
+              <div className="text-2xl md:text-3xl font-bold">{lowStockItems}</div>
               <p className="text-xs text-muted-foreground">Items need restocking</p>
             </CardContent>
           </Card>
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
+  <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 min-w-0">
+  <div className="lg:col-span-2 min-w-0">
           <Card>
             <CardHeader>
               <CardTitle>Weekly Sales Performance</CardTitle>
@@ -113,14 +113,14 @@ const DashboardPage = () => {
           </Card>
         </div>
 
-        <div className="flex flex-col gap-6">
+  <div className="flex flex-col gap-6 min-w-0">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Avg. Transaction Value</CardTitle>
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">R{averageTransactionValue.toFixed(2)}</div>
+              <div className="text-2xl md:text-3xl font-bold">R{averageTransactionValue.toFixed(2)}</div>
               <p className="text-xs text-muted-foreground">Based on recent transactions</p>
             </CardContent>
           </Card>
@@ -130,7 +130,7 @@ const DashboardPage = () => {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">+{newCustomersThisWeek}</div>
+              <div className="text-2xl md:text-3xl font-bold">+{newCustomersThisWeek}</div>
               <p className="text-xs text-muted-foreground">In the last 7 days</p>
             </CardContent>
           </Card>
@@ -146,7 +146,7 @@ const DashboardPage = () => {
           <CardDescription>Your top-performing items this month.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto rounded-md border">
+          <div className="overflow-x-auto rounded-md border min-w-0">
             <Table>
               <TableHeader>
                 <TableRow>

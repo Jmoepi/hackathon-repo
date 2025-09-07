@@ -86,14 +86,18 @@ export default function InventoryPage() {
     setIsDialogOpen(false);
   };
 
+  const handleRemoveProduct = (id: string) => {
+    setLocalProducts((curr) => curr.filter((p) => p.id !== id));
+  };
+
   return (
     <>
-      <div className="flex flex-col gap-6">
+  <div className="flex flex-col gap-6 min-w-0">
         {/* Low stock callout */}
         {lowStockProducts.length > 0 && stockStatusFilter === "all" && (
-          <Card className="border-amber-500 bg-amber-50/50 dark:bg-amber-900/10">
+          <Card className="border-amber-500 bg-amber-50/50 dark:bg-amber-900/10 min-w-0">
             <CardHeader>
-              <div className="flex items-center gap-2 text-amber-600 dark:text-amber-500">
+              <div className="flex items-center gap-2 text-amber-600 dark:text-amber-500 min-w-0">
                 <AlertTriangle className="h-5 w-5" />
                 <CardTitle>Low Stock Items</CardTitle>
               </div>
@@ -102,7 +106,7 @@ export default function InventoryPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto min-w-0">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -132,8 +136,8 @@ export default function InventoryPage() {
         )}
 
         {/* Full inventory */}
-        <Card>
-          <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+  <Card className="min-w-0">
+          <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between min-w-0">
             <div>
               <CardTitle>Full Inventory</CardTitle>
               <CardDescription>Track and manage all your product stock levels.</CardDescription>
@@ -144,9 +148,9 @@ export default function InventoryPage() {
             </Button>
           </CardHeader>
 
-          <CardContent className="flex flex-col gap-4">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div className="relative flex-1">
+          <CardContent className="flex flex-col gap-4 min-w-0">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between min-w-0">
+              <div className="relative flex-1 min-w-0">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search by product name..."
@@ -165,7 +169,7 @@ export default function InventoryPage() {
               </Tabs>
             </div>
 
-            <div className="overflow-x-auto rounded-md border">
+            <div className="overflow-x-auto rounded-md border min-w-0">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -222,6 +226,14 @@ export default function InventoryPage() {
                             >
                               <Plus className="h-4 w-4" />
                               <span className="sr-only">Increase stock</span>
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="icon"
+                              onClick={() => handleRemoveProduct(product.id)}
+                            >
+                              <span className="sr-only">Remove product</span>
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                             </Button>
                           </div>
                         </TableCell>

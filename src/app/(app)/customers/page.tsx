@@ -55,6 +55,14 @@ export default function CustomersPage() {
     setCustomers((current) => [customer, ...current]);
   };
 
+  const handleRemoveCustomer = (id: string) => {
+    setCustomers((current) => current.filter((c) => c.id !== id));
+    toast({
+      title: 'Customer Removed',
+      description: 'The customer has been removed from your list.',
+    });
+  };
+
   return (
     <>
       <div className="grid gap-6 md:grid-cols-5">
@@ -78,6 +86,7 @@ export default function CustomersPage() {
                       <TableHead>Name</TableHead>
                       <TableHead>Phone</TableHead>
                       <TableHead className="text-right">Joined</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -86,6 +95,15 @@ export default function CustomersPage() {
                         <TableCell className="font-medium">{customer.name}</TableCell>
                         <TableCell>{customer.phone}</TableCell>
                         <TableCell className="text-right">{customer.joined}</TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleRemoveCustomer(customer.id)}
+                          >
+                            Remove
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

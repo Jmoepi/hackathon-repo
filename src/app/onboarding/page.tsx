@@ -69,13 +69,14 @@ export default function OnboardingPage() {
   const progress = ((current + 1) / onboardingSteps.length) * 100;
 
   return (
-    <div className="flex h-screen w-full flex-col items-center justify-center bg-background p-4 md:p-8">
+  <div className="flex h-screen w-full flex-col items-center justify-center bg-[var(--gradient-1)] p-4 md:p-8">
        <div className="absolute top-4 right-4 z-10">
         <Button asChild variant="ghost">
           <Link href="/dashboard">Skip</Link>
         </Button>
       </div>
       <div className="flex items-center gap-3 mb-6">
+        <span className="inline-block rounded-full bg-[hsl(var(--accent-pink))] px-3 py-1 text-white text-xs font-bold shadow">New!</span>
         <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
@@ -98,7 +99,7 @@ export default function OnboardingPage() {
           {onboardingSteps.map((step, index) => (
             <CarouselItem key={index}>
               <Card className="overflow-hidden">
-                <CardContent className="flex flex-col items-center justify-center p-0 text-center">
+                <CardContent className="flex flex-col items-center justify-center p-0 text-center bg-[hsl(var(--accent-green))] bg-opacity-10 rounded-xl shadow-lg">
                   <div className="relative w-full h-48 md:h-64">
                     <Skeleton className="absolute inset-0 w-full h-full" />
                     <Image
@@ -112,8 +113,9 @@ export default function OnboardingPage() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                   </div>
                   <div className="p-6 space-y-3">
+                    <span className="inline-block rounded-full bg-[hsl(var(--accent-purple))] px-2 py-1 text-white text-xs font-semibold mb-2">{step.title}</span>
                     <step.icon className="w-10 h-10 mx-auto text-primary" />
-                    <h2 className="text-2xl font-bold">{step.title}</h2>
+                    <h2 className="text-2xl font-bold text-[hsl(var(--accent-teal))] drop-shadow">{step.title}</h2>
                     <p className="text-muted-foreground max-w-md mx-auto">{step.description}</p>
                   </div>
                 </CardContent>

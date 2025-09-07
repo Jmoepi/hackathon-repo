@@ -80,7 +80,7 @@ export default function PaymentsPage() {
   // If loading or context is missing, show skeletons
   if (loading || !transactions) {
     return (
-      <div className="grid gap-6 md:grid-cols-2">
+  <div className="grid gap-6 md:grid-cols-2 min-w-0">
         <Skeleton className="h-64 w-full mb-4" />
         <Skeleton className="h-64 w-full mb-4" />
       </div>
@@ -91,14 +91,14 @@ export default function PaymentsPage() {
     <>
       <div className="grid gap-6 md:grid-cols-2">
         {/* Generate Payment QR */}
-        <Card>
+  <Card className="min-w-0">
           <CardHeader>
             <CardTitle>Generate Payment QR</CardTitle>
             <CardDescription>
               Enter an amount to generate a unique QR code for payment.
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="min-w-0">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField
@@ -123,7 +123,7 @@ export default function PaymentsPage() {
                     </FormItem>
                   )}
                 />
-                <Button type="submit" className="w-full">
+                <Button type="submit" className="w-full min-h-[44px] text-base">
                   <QrCode className="mr-2 h-4 w-4" />
                   Generate QR
                 </Button>
@@ -133,13 +133,13 @@ export default function PaymentsPage() {
         </Card>
 
         {/* Recent Transactions */}
-        <Card>
+  <Card className="min-w-0">
           <CardHeader>
             <CardTitle>Recent Transactions</CardTitle>
             <CardDescription>A log of your most recent digital payments.</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
+          <CardContent className="min-w-0">
+            <div className="overflow-x-auto min-w-0">
               <Table>
                 <TableHeader>
                   <TableRow>
