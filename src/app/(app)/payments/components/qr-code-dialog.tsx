@@ -6,50 +6,126 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from '@/components/ui/dialog';
-import { Loader2 } from 'lucide-react';
+} from "@/components/ui/dialog";
+import { Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+import QRCode from "qrcode";
+
+type Product = {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+};
 
 type QrCodeDialogProps = {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  amount: number;
+  products: Product[];
+  total: number;
 };
 
-export default function QrCodeDialog({ isOpen, onOpenChange, amount }: QrCodeDialogProps) {
+export default function QrCodeDialog({
+  isOpen,
+  onOpenChange,
+  products,
+  total,
+}: QrCodeDialogProps) {
+  const [qrUrl, setQrUrl] = useState<string>("");
+  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
+  const { toast } = useToast();
+
+  // Generate QR code when dialog opens or items change
+  useEffect(() => {
+    if (!isOpen || products.length === 0) return;
+
+    setPaymentConfirmed(false);
+
+    const payload = JSON.stringify({
+      products: products.map((p) => ({
+        id: p.id,
+        name: p.name,
+        price: p.price,
+        quantity: p.quantity,
+      })),
+      total,
+      timestamp: Date.now(),
+    });
+
+    QRCode.toDataURL(
+      payload,
+      { width: 256, margin: 2 },
+      (err: unknown, url?: string) => {
+        if (!err && url) setQrUrl(url);
+      }
+    );
+  }, [isOpen, products, total]);
+
+  // Mock payment confirmation after 8 seconds
+  useEffect(() => {
+    if (!isOpen || products.length === 0) return;
+
+    setPaymentConfirmed(false);
+    const timer = setTimeout(() => {
+      setPaymentConfirmed(true);
+      toast({
+        title: "Payment Received!",
+        description: `Successfully received R${total.toFixed(2)} for selected products.`,
+        variant: "default",
+        className: "bg-primary text-primary-foreground border-primary",
+      });
+      onOpenChange(false);
+    }, 8000);
+
+    return () => clearTimeout(timer);
+  }, [isOpen, products, total, onOpenChange, toast]);
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
           <DialogTitle>Payment Request</DialogTitle>
-          <DialogDescription>
-            Ask your customer to scan the QR code to pay R{amount.toFixed(2)}.
+          <DialogDescription asChild>
+            <div>
+              Ask your customer to scan the QR code to pay{" "}
+              <span className="font-bold">R{total.toFixed(2)}</span> for:
+              <ul className="mt-2 ml-4 text-sm list-disc">
+                {products.map((p) => (
+                  <li key={p.id}>
+                    {p.name}{" "}
+                    <span className="text-muted-foreground">
+                      (R{p.price.toFixed(2)})
+                    </span>
+                    {p.quantity > 1 && (
+                      <span className="ml-2 text-xs text-primary">
+                        x{p.quantity}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
           </DialogDescription>
         </DialogHeader>
+
         <div className="flex flex-col items-center justify-center gap-4 py-4">
-            <div className="rounded-lg border bg-white p-4 shadow-md">
-                <svg width="200" height="200" viewBox="0 0 33 33" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-48 w-48">
-                    <path fillRule="evenodd" clipRule="evenodd" d="M0 0H13V13H0V0ZM3 3H10V10H3V3Z" fill="black"/>
-                    <path fillRule="evenodd" clipRule="evenodd" d="M20 0H33V13H20V0ZM23 3H30V10H23V3Z" fill="black"/>
-                    <path fillRule="evenodd" clipRule="evenodd" d="M0 20H13V33H0V20ZM3 23H10V30H3V23Z" fill="black"/>
-                    <path d="M20 20H23V23H20V20Z" fill="black"/>
-                    <path d="M23 20H26V23H23V20Z" fill="black"/>
-                    <path d="M26 20H29V23H26V20Z" fill="black"/>
-                    <path d="M29 20H32V23H29V20Z" fill="black"/>
-                    <path d="M20 23H23V26H20V23Z" fill="black"/>
-                    <path d="M26 23H29V26H26V23Z" fill="black"/>
-                    <path d="M29 23H32V26H29V23Z" fill="black"/>
-                    <path d="M20 26H23V29H20V26Z" fill="black"/>
-                    <path d="M23 26H26V29H23V26Z" fill="black"/>
-                    <path d="M26 26H29V29H26V26Z" fill="black"/>
-                    <path d="M20 29H23V32H20V29Z" fill="black"/>
-                    <path d="M23 29H26V32H23V29Z" fill="black"/>
-                    <path d="M29 29H32V32H29V29Z" fill="black"/>
-                </svg>
-            </div>
+          <div className="rounded-lg border bg-white p-4 shadow-md">
+            {qrUrl ? (
+              <img src={qrUrl} alt="Payment QR" className="h-48 w-48" />
+            ) : (
+              <Loader2 className="h-12 w-12 animate-spin text-muted-foreground" />
+            )}
+          </div>
+
+          {!paymentConfirmed ? (
             <div className="flex items-center gap-2 text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <span>Waiting for payment confirmation...</span>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Waiting for payment confirmation...</span>
             </div>
+          ) : (
+            <div className="text-green-600 font-bold">Payment Confirmed!</div>
+          )}
         </div>
       </DialogContent>
     </Dialog>

@@ -35,26 +35,42 @@ import { useToast } from '@/hooks/use-toast';
 import dynamic from 'next/dynamic';
 const QrCodeDialog = dynamic(() => import('./components/qr-code-dialog'), { ssr: false });
 import { Skeleton } from '@/components/ui/skeleton';
+import { Product } from '@/lib/data';
 
 const paymentSchema = z.object({
-  amount: z.coerce.number().positive({ message: 'Amount must be positive.' }),
+  items: z.array(z.object({
+    productId: z.string(),
+    quantity: z.number().min(1, 'Quantity must be at least 1'),
+  })).min(1, { message: 'Select at least one product.' }),
 });
 
 // ✅ Exported Page Component
 export default function PaymentsPage() {
   const [loading, setLoading] = useState(true);
-  const { transactions, sellProduct } = useShop() || {};
+  const { products, transactions, sellProduct } = useShop() || {};
   const [isQrOpen, setIsQrOpen] = useState(false);
-  const [qrAmount, setQrAmount] = useState(0);
-  const [selectedProductId, setSelectedProductId] = useState('prod-001');
+  const [selectedItems, setSelectedItems] = useState<{ productId: string; quantity: number }[]>([]);
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof paymentSchema>>({
     resolver: zodResolver(paymentSchema),
     defaultValues: {
-      amount: 0,
+      items: [],
     },
   });
+
+  // Sync form items field with selectedItems state
+  useEffect(() => {
+    setSelectedItems(form.watch('items'));
+  }, [form.watch('items')]);
+
+  const selectedProducts = selectedItems
+    .map(item => {
+      const product = products.find(p => p.id === item.productId);
+      return product ? { ...product, quantity: item.quantity } : undefined;
+    })
+    .filter((p): p is Product & { quantity: number } => !!p);
+  const total = selectedProducts.reduce((sum, p) => sum + (p.price * p.quantity), 0);
 
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 1200);
@@ -62,25 +78,13 @@ export default function PaymentsPage() {
   }, []);
 
   function onSubmit(values: z.infer<typeof paymentSchema>) {
-    setQrAmount(values.amount);
     setIsQrOpen(true);
-    setTimeout(() => {
-      sellProduct(selectedProductId, values.amount);
-      setIsQrOpen(false);
-      toast({
-        title: "Payment Received!",
-        description: `Successfully received R${values.amount.toFixed(2)} for White Bread.`,
-        variant: "default",
-        className: "bg-primary text-primary-foreground border-primary",
-      });
-      form.reset();
-    }, 5000);
   }
 
   // If loading or context is missing, show skeletons
   if (loading || !transactions) {
     return (
-  <div className="grid gap-6 md:grid-cols-2 min-w-0">
+      <div className="grid gap-6 md:grid-cols-2 min-w-0">
         <Skeleton className="h-64 w-full mb-4" />
         <Skeleton className="h-64 w-full mb-4" />
       </div>
@@ -91,11 +95,11 @@ export default function PaymentsPage() {
     <>
       <div className="grid gap-6 md:grid-cols-2">
         {/* Generate Payment QR */}
-  <Card className="min-w-0">
+        <Card className="min-w-0">
           <CardHeader>
             <CardTitle>Generate Payment QR</CardTitle>
             <CardDescription>
-              Enter an amount to generate a unique QR code for payment.
+              Select products from inventory to generate a QR code for payment.
             </CardDescription>
           </CardHeader>
           <CardContent className="min-w-0">
@@ -103,27 +107,52 @@ export default function PaymentsPage() {
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField
                   control={form.control}
-                  name="amount"
+                  name="items"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Amount</FormLabel>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center justify-center h-6 w-6 text-muted-foreground font-bold">R</span>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            placeholder="15.50"
-                            className="pl-8"
-                            {...field}
-                          />
-                        </FormControl>
+                      <FormLabel>Products & Quantity</FormLabel>
+                      <div className="flex flex-col gap-2">
+                        {products.map((product) => {
+                          const item = field.value.find((i: any) => i.productId === product.id);
+                          return (
+                            <div key={product.id} className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                checked={!!item}
+                                onChange={e => {
+                                  if (e.target.checked) {
+                                    field.onChange([...field.value, { productId: product.id, quantity: 1 }]);
+                                  } else {
+                                    field.onChange(field.value.filter((i: any) => i.productId !== product.id));
+                                  }
+                                }}
+                              />
+                              <span>{product.name} <span className="text-xs text-muted-foreground">(R{product.price.toFixed(2)})</span></span>
+                              {!!item && (
+                                <input
+                                  type="number"
+                                  min={1}
+                                  max={product.stock}
+                                  value={item.quantity}
+                                  onChange={e => {
+                                    const qty = Math.max(1, Math.min(product.stock, Number(e.target.value)));
+                                    field.onChange(field.value.map((i: any) =>
+                                      i.productId === product.id ? { ...i, quantity: qty } : i
+                                    ));
+                                  }}
+                                  className="w-16 border rounded px-2 py-1"
+                                />
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                <Button type="submit" className="w-full min-h-[44px] text-base">
+                <div className="font-bold text-lg text-primary">Total: R{total.toFixed(2)}</div>
+                <Button type="submit" className="w-full min-h-[44px] text-base" disabled={selectedProducts.length === 0}>
                   <QrCode className="mr-2 h-4 w-4" />
                   Generate QR
                 </Button>
@@ -133,7 +162,7 @@ export default function PaymentsPage() {
         </Card>
 
         {/* Recent Transactions */}
-  <Card className="min-w-0">
+        <Card className="min-w-0">
           <CardHeader>
             <CardTitle>Recent Transactions</CardTitle>
             <CardDescription>A log of your most recent digital payments.</CardDescription>
@@ -169,7 +198,8 @@ export default function PaymentsPage() {
       <QrCodeDialog
         isOpen={isQrOpen}
         onOpenChange={setIsQrOpen}
-        amount={qrAmount}
+        products={selectedProducts}
+        total={total}
       />
     </>
   );

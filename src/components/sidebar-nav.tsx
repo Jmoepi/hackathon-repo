@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Boxes, QrCode, Users } from 'lucide-react';
+import { LayoutDashboard, Boxes, QrCode, Users, CreditCard } from 'lucide-react';
 import {
   SidebarMenu,
   SidebarMenuItem,
@@ -45,6 +45,18 @@ export default function SidebarNav() {
           </SidebarMenuButton>
         </SidebarMenuItem>
       ))}
+      <SidebarMenuItem key="/airtime-data">
+        <SidebarMenuButton
+          asChild
+          isActive={pathname === "/airtime-data"}
+          tooltip="Airtime & Data"
+        >
+          <Link href="/airtime-data" onClick={handleNavClick}>
+            <CreditCard />
+            <span>Airtime & Data</span>
+          </Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
     </SidebarMenu>
   );
 }
