@@ -178,8 +178,11 @@ export default function PaymentsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {transactions.slice(0, 5).map((txn) => (
-                    <TableRow key={txn.id}>
+                  {transactions.slice(0, 5).map((txn, idx) => (
+                    <TableRow
+                      key={txn.id}
+                      className={idx === 0 ? "bg-green-100 dark:bg-green-900/40 animate-pulse" : ""}
+                    >
                       <TableCell className="font-medium">R{txn.amount.toFixed(2)}</TableCell>
                       <TableCell>{new Date(txn.date).toLocaleTimeString()}</TableCell>
                       <TableCell className="text-right text-primary font-semibold">

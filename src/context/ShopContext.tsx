@@ -22,7 +22,7 @@ export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children
     ));
     setTransactions(prev => [
       {
-        id: `txn-${Date.now()}`,
+        id: `txn-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         amount,
         date: new Date().toISOString(),
         customer: 'Demo',

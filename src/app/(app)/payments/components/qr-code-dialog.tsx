@@ -10,6 +10,7 @@ import {
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useShop } from "@/context/ShopContext";
 import QRCode from "qrcode";
 
 type Product = {
@@ -35,6 +36,7 @@ export default function QrCodeDialog({
   const [qrUrl, setQrUrl] = useState<string>("");
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
   const { toast } = useToast();
+    const { sellProduct } = useShop();
 
   // Generate QR code when dialog opens or items change
   useEffect(() => {
@@ -69,6 +71,10 @@ export default function QrCodeDialog({
     setPaymentConfirmed(false);
     const timer = setTimeout(() => {
       setPaymentConfirmed(true);
+      // Record each product sale as a transaction
+      products.forEach((p) => {
+        sellProduct(p.id, p.price * p.quantity);
+      });
       toast({
         title: "Payment Received!",
         description: `Successfully received R${total.toFixed(2)} for selected products.`,
@@ -79,7 +85,7 @@ export default function QrCodeDialog({
     }, 8000);
 
     return () => clearTimeout(timer);
-  }, [isOpen, products, total, onOpenChange, toast]);
+  }, [isOpen, products, total, onOpenChange, toast, sellProduct]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
