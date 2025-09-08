@@ -1,7 +1,7 @@
 
-# Township Trader Toolkit
+# local Trader Toolkit
 
-Township Trader Toolkit is a modern, mobile-friendly business management app for small businesses and street vendors. Built with Next.js, React, and Tailwind CSS, it provides:
+local Trader Toolkit is a modern, mobile-friendly business management app for small businesses and street vendors. Built with Next.js, React, and Tailwind CSS, it provides:
 
 - **Inventory Management**: Track products, update stock, and get low-stock alerts.
 - **Payments**: Generate QR codes for digital payments, with a realistic mock payment provider (pending → webhook → paid) for demos. Easily swap to Paystack/Flutterwave later.
