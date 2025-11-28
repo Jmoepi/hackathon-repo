@@ -17,7 +17,8 @@ import {
   RefreshCw,
 } from "lucide-react";
 
-const OTP_LENGTH = 6;
+// Supabase OTP length (update if your Supabase config uses different length)
+const OTP_LENGTH = 8;
 
 // Loading fallback component
 function VerifyOtpLoading() {

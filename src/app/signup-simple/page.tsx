@@ -20,7 +20,9 @@ import {
 } from "lucide-react";
 
 type Step = "email" | "otp";
-const OTP_LENGTH = 6;
+
+// Supabase default OTP length is 6, but some configurations send 8 digits
+const OTP_LENGTH = 8;
 
 export default function SimpleEmailOtpSignup() {
   const router = useRouter();
