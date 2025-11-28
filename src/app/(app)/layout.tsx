@@ -13,6 +13,7 @@ import SidebarNav from '@/components/sidebar-nav';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { MobileNav } from '@/components/mobile-nav';
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   return (
@@ -83,9 +84,11 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               </Avatar>
             </Link>
           </Button>
+
         </header>
-        <main className="flex-1 p-4 md:p-6">{children}</main>
+        <main className="flex-1 p-4 md:p-6 pb-20 md:pb-6">{children}</main>
+        <MobileNav />
       </SidebarInset>
-    </SidebarProvider>
+    </SidebarProvider >
   );
 }

@@ -5,25 +5,28 @@
 @layer base {
   :root {
     /* Vibrant Green Primary */
-    --primary: 140 52% 55%; /* #50C878 */
+    --primary: 140 52% 55%;
+    /* #50C878 */
     --primary-foreground: 0 0% 100%;
 
     /* Light Desaturated Green Background */
-    --background: 146 50% 94%; /* #E8F8EF */
+    --background: 146 50% 94%;
+    /* #E8F8EF */
     --foreground: 222.2 47.4% 11.2%;
 
     /* Warm Yellow Accent */
-    --accent: 47 100% 67%; /* #FFDB58 */
+    --accent: 47 100% 67%;
+    /* #FFDB58 */
     --accent-foreground: 222.2 47.4% 11.2%;
 
     --card: 0 0% 100%;
     --card-foreground: 222.2 47.4% 11.2%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 47.4% 11.2%;
-    
+
     --secondary: 146 30% 90%;
     --secondary-foreground: 222.2 47.4% 11.2%;
-    
+
     --muted: 146 20% 90%;
     --muted-foreground: 215.4 16.3% 46.9%;
 
@@ -46,13 +49,13 @@
     --input: 146 20% 85%;
     --ring: 140 52% 55%;
     --radius: 0.5rem;
-    
+
     --chart-1: 140 52% 55%;
     --chart-2: 47 100% 67%;
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
-    
+
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 222.2 47.4% 11.2%;
     --sidebar-primary: 140 52% 55%;
@@ -70,27 +73,27 @@
     --card-foreground: 213 31% 91%;
     --popover: 224 71% 4%;
     --popover-foreground: 213 31% 91%;
-    
+
     --primary: 140 52% 55%;
     --primary-foreground: 0 0% 100%;
-    
+
     --secondary: 215 28% 17%;
     --secondary-foreground: 210 40% 98%;
     --muted: 215 28% 17%;
     --muted-foreground: 218 11% 65%;
-    
+
     --accent: 47 100% 67%;
     --accent-foreground: 222.2 47.4% 11.2%;
-    
+
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
     --border: 215 28% 17%;
     --input: 215 28% 17%;
     --ring: 140 52% 55%;
-    
+
     --chart-1: 140 52% 55%;
     --chart-2: 47 100% 67%;
-    
+
     --sidebar-background: 224 71% 4%;
     --sidebar-foreground: 213 31% 91%;
     --sidebar-primary: 140 52% 55%;
@@ -106,7 +109,49 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Mobile-First Enhancements */
+@layer utilities {
+
+  /* Safe area support for modern mobile devices */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  /* Touch-friendly tap targets */
+  @media (max-width: 768px) {
+
+    button,
+    a {
+      min-height: 44px;
+      min-width: 44px;
+    }
+  }
+
+  /* Smooth scrolling for mobile */
+  @supports (-webkit-overflow-scrolling: touch) {
+    * {
+      -webkit-overflow-scrolling: touch;
+    }
+  }
+
+  /* Prevent text size adjustment on orientation change */
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  /* Remove tap highlight on mobile */
+  * {
+    -webkit-tap-highlight-color: transparent;
   }
 }

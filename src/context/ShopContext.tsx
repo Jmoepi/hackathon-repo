@@ -1,5 +1,5 @@
 "use client";
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { initialProducts, initialTransactions, Product, Transaction } from '@/lib/data';
 
 interface ShopContextType {
@@ -13,6 +13,42 @@ const ShopContext = createContext<ShopContextType | undefined>(undefined);
 export const ShopProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    const storedProducts = localStorage.getItem('products');
+    const storedTransactions = localStorage.getItem('transactions');
+
+    if (storedProducts) {
+      try {
+        setProducts(JSON.parse(storedProducts));
+      } catch (e) {
+        console.error("Failed to parse products from local storage", e);
+      }
+    }
+    if (storedTransactions) {
+      try {
+        setTransactions(JSON.parse(storedTransactions));
+      } catch (e) {
+        console.error("Failed to parse transactions from local storage", e);
+      }
+    }
+    setIsInitialized(true);
+  }, []);
+
+  // Save to localStorage whenever data changes
+  useEffect(() => {
+    if (isInitialized) {
+      localStorage.setItem('products', JSON.stringify(products));
+    }
+  }, [products, isInitialized]);
+
+  useEffect(() => {
+    if (isInitialized) {
+      localStorage.setItem('transactions', JSON.stringify(transactions));
+    }
+  }, [transactions, isInitialized]);
 
   const sellProduct = (productId: string, amount: number) => {
     setProducts(prev => prev.map(p =>

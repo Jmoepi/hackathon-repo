@@ -1,0 +1,24 @@
+{
+    "name": "Township Trader Toolkit",
+    "short_name": "Township Trader",
+    "description": "A comprehensive toolkit for township traders to manage inventory, payments, and customers",
+    "start_url": "/dashboard",
+    "display": "standalone",
+    "background_color": "#E8F8EF",
+    "theme_color": "#50C878",
+    "orientation": "portrait",
+    "icons": [
+        {
+            "src": "/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+}
