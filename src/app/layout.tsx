@@ -3,6 +3,7 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from 'next-themes';
 import { AuthProvider } from '@/context/AuthContext';
+import { ReCaptchaProvider } from '@/components/recaptcha-provider';
 
 export const metadata: Metadata = {
   title: 'TradaHub | Your Business, Your Pocket',
@@ -44,10 +45,12 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-            <ShopProviderWrapper>
-              {children}
-              <Toaster />
-            </ShopProviderWrapper>
+            <ReCaptchaProvider>
+              <ShopProviderWrapper>
+                {children}
+                <Toaster />
+              </ShopProviderWrapper>
+            </ReCaptchaProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>
