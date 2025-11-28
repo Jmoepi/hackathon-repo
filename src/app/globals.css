@@ -4,104 +4,109 @@
 
 @layer base {
   :root {
-    /* Vibrant Green Primary */
-    --primary: 140 52% 55%;
-    /* #50C878 */
+    /* Premium Emerald Green Primary */
+    --primary: 158 64% 52%;
     --primary-foreground: 0 0% 100%;
 
-    /* Light Desaturated Green Background */
-    --background: 146 50% 94%;
-    /* #E8F8EF */
-    --foreground: 222.2 47.4% 11.2%;
+    /* Clean White/Light Gray Background */
+    --background: 210 20% 98%;
+    --foreground: 224 71% 4%;
 
-    /* Warm Yellow Accent */
-    --accent: 47 100% 67%;
-    /* #FFDB58 */
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Vibrant Amber Accent */
+    --accent: 38 92% 50%;
+    --accent-foreground: 0 0% 100%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 47.4% 11.2%;
+    --card-foreground: 224 71% 4%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 47.4% 11.2%;
+    --popover-foreground: 224 71% 4%;
 
-    --secondary: 146 30% 90%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 224 71% 4%;
 
-    --muted: 146 20% 90%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
 
-    /* Additional Accents for UI richness */
-    --accent-pink: 322 90% 60%;
+    /* Rich accent palette */
+    --accent-pink: 330 81% 60%;
     --accent-pink-foreground: 0 0% 100%;
-    --accent-green: 140 52% 55%;
+    --accent-green: 158 64% 52%;
     --accent-green-foreground: 0 0% 100%;
-    --accent-purple: 262 52% 47%;
+    --accent-purple: 271 81% 56%;
     --accent-purple-foreground: 0 0% 100%;
-    --accent-teal: 174 80% 40%;
+    --accent-teal: 172 66% 50%;
     --accent-teal-foreground: 0 0% 100%;
+    --accent-blue: 217 91% 60%;
+    --accent-blue-foreground: 0 0% 100%;
+    --accent-orange: 25 95% 53%;
+    --accent-orange-foreground: 0 0% 100%;
 
-    --gradient-1: linear-gradient(135deg, hsl(140 52% 55%) 0%, hsl(174 80% 40%) 100%);
-    --gradient-2: linear-gradient(135deg, hsl(47 100% 67%) 0%, hsl(322 90% 60%) 100%);
+    /* Premium gradients */
+    --gradient-1: linear-gradient(135deg, hsl(158 64% 52%) 0%, hsl(172 66% 50%) 50%, hsl(217 91% 60%) 100%);
+    --gradient-2: linear-gradient(135deg, hsl(271 81% 56%) 0%, hsl(330 81% 60%) 100%);
+    --gradient-3: linear-gradient(135deg, hsl(38 92% 50%) 0%, hsl(25 95% 53%) 100%);
+    --gradient-hero: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+    --gradient-card: linear-gradient(145deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.4) 100%);
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 146 20% 85%;
-    --input: 146 20% 85%;
-    --ring: 140 52% 55%;
-    --radius: 0.5rem;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 158 64% 52%;
+    --radius: 1rem;
 
-    --chart-1: 140 52% 55%;
-    --chart-2: 47 100% 67%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    --chart-1: 158 64% 52%;
+    --chart-2: 38 92% 50%;
+    --chart-3: 271 81% 56%;
+    --chart-4: 172 66% 50%;
+    --chart-5: 330 81% 60%;
 
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 222.2 47.4% 11.2%;
-    --sidebar-primary: 140 52% 55%;
+    --sidebar-foreground: 224 71% 4%;
+    --sidebar-primary: 158 64% 52%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 146 30% 90%;
-    --sidebar-accent-foreground: 222.2 47.4% 11.2%;
-    --sidebar-border: 146 20% 85%;
-    --sidebar-ring: 140 52% 55%;
+    --sidebar-accent: 220 14% 96%;
+    --sidebar-accent-foreground: 224 71% 4%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 158 64% 52%;
   }
 
   .dark {
     --background: 224 71% 4%;
-    --foreground: 213 31% 91%;
-    --card: 224 71% 4%;
-    --card-foreground: 213 31% 91%;
-    --popover: 224 71% 4%;
-    --popover-foreground: 213 31% 91%;
+    --foreground: 210 20% 98%;
+    --card: 223 47% 11%;
+    --card-foreground: 210 20% 98%;
+    --popover: 223 47% 11%;
+    --popover-foreground: 210 20% 98%;
 
-    --primary: 140 52% 55%;
+    --primary: 158 64% 52%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 215 28% 17%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 215 28% 17%;
-    --muted-foreground: 218 11% 65%;
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 20% 98%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
 
-    --accent: 47 100% 67%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 38 92% 50%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 215 28% 17%;
-    --input: 215 28% 17%;
-    --ring: 140 52% 55%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 20% 98%;
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: 158 64% 52%;
 
-    --chart-1: 140 52% 55%;
-    --chart-2: 47 100% 67%;
+    --chart-1: 158 64% 52%;
+    --chart-2: 38 92% 50%;
 
     --sidebar-background: 224 71% 4%;
-    --sidebar-foreground: 213 31% 91%;
-    --sidebar-primary: 140 52% 55%;
+    --sidebar-foreground: 210 20% 98%;
+    --sidebar-primary: 158 64% 52%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 215 28% 17%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 215 28% 17%;
-    --sidebar-ring: 140 52% 55%;
+    --sidebar-accent: 217 33% 17%;
+    --sidebar-accent-foreground: 210 20% 98%;
+    --sidebar-border: 217 33% 17%;
+    --sidebar-ring: 158 64% 52%;
   }
 }
 
@@ -110,13 +115,104 @@
     @apply border-border;
   }
 
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Improved selection */
+  ::selection {
+    @apply bg-primary/20 text-foreground;
   }
 }
 
-/* Mobile-First Enhancements */
+/* Premium Components */
+@layer components {
+  .glass {
+    @apply bg-white/70 backdrop-blur-xl border border-white/20 shadow-xl;
+  }
+
+  .glass-dark {
+    @apply bg-black/40 backdrop-blur-xl border border-white/10;
+  }
+
+  .gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary via-accent-teal to-accent-blue;
+  }
+
+  .gradient-border {
+    @apply relative;
+    background: linear-gradient(var(--background), var(--background)) padding-box,
+                linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent-teal))) border-box;
+    border: 2px solid transparent;
+  }
+
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 hover:shadow-primary/10;
+  }
+
+  .btn-shine {
+    @apply relative overflow-hidden;
+  }
+
+  .btn-shine::before {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full;
+    animation: shine 3s infinite;
+  }
+
+  .floating {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+}
+
+/* Animations */
 @layer utilities {
+  @keyframes shine {
+    100% {
+      transform: translateX(100%);
+    }
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% {
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+    }
+    50% {
+      box-shadow: 0 0 40px rgba(16, 185, 129, 0.6);
+    }
+  }
+
+  @keyframes gradient-shift {
+    0%, 100% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+  }
+
+  .animate-gradient {
+    background-size: 200% 200%;
+    animation: gradient-shift 8s ease infinite;
+  }
 
   /* Safe area support for modern mobile devices */
   .pb-safe {
@@ -129,7 +225,6 @@
 
   /* Touch-friendly tap targets */
   @media (max-width: 768px) {
-
     button,
     a {
       min-height: 44px;
@@ -153,5 +248,23 @@
   /* Remove tap highlight on mobile */
   * {
     -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/20 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/40;
   }
 }

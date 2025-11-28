@@ -2,23 +2,52 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Boxes, QrCode, Users, CreditCard } from "lucide-react";
+import { LayoutDashboard, Boxes, QrCode, Users, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-    { href: "/dashboard", label: "Home", icon: LayoutDashboard },
-    { href: "/inventory", label: "Stock", icon: Boxes },
-    { href: "/payments", label: "Pay", icon: QrCode },
-    { href: "/customers", label: "People", icon: Users },
-    { href: "/airtime-data", label: "Airtime", icon: CreditCard },
+    { 
+        href: "/dashboard", 
+        label: "Home", 
+        icon: LayoutDashboard,
+        gradient: "from-emerald-500 to-teal-500",
+    },
+    { 
+        href: "/inventory", 
+        label: "Stock", 
+        icon: Boxes,
+        gradient: "from-blue-500 to-indigo-500",
+    },
+    { 
+        href: "/payments", 
+        label: "Pay", 
+        icon: QrCode,
+        gradient: "from-purple-500 to-pink-500",
+    },
+    { 
+        href: "/customers", 
+        label: "People", 
+        icon: Users,
+        gradient: "from-orange-500 to-amber-500",
+    },
+    { 
+        href: "/settings", 
+        label: "Settings", 
+        icon: Settings,
+        gradient: "from-slate-500 to-gray-600",
+    },
 ];
 
 export function MobileNav() {
     const pathname = usePathname();
 
     return (
-        <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-t border-gray-200 pb-safe md:hidden">
-            <div className="flex items-center justify-around h-16 px-2">
+        <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
+            {/* Blur backdrop */}
+            <div className="absolute inset-0 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-t border-border/50" />
+            
+            {/* Nav content */}
+            <div className="relative flex items-center justify-around h-16 px-2 pb-safe">
                 {navItems.map((item) => {
                     const isActive = pathname === item.href;
                     return (
@@ -26,19 +55,29 @@ export function MobileNav() {
                             key={item.href}
                             href={item.href}
                             className={cn(
-                                "flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors duration-200",
-                                isActive ? "text-primary" : "text-gray-500 hover:text-gray-900"
+                                "flex flex-col items-center justify-center flex-1 h-full py-2 transition-all duration-200",
+                                isActive ? "text-primary" : "text-muted-foreground"
                             )}
                         >
                             <div
                                 className={cn(
-                                    "p-1.5 rounded-full transition-all duration-200",
-                                    isActive ? "bg-primary/10 scale-110" : "bg-transparent"
+                                    "flex items-center justify-center w-10 h-10 rounded-2xl transition-all duration-300",
+                                    isActive 
+                                        ? `bg-gradient-to-br ${item.gradient} text-white shadow-lg scale-110` 
+                                        : "text-muted-foreground hover:bg-muted"
                                 )}
                             >
-                                <item.icon className={cn("h-5 w-5", isActive && "fill-current")} />
+                                <item.icon className={cn("h-5 w-5", isActive && "drop-shadow-sm")} />
                             </div>
-                            <span className="text-[10px] font-medium">{item.label}</span>
+                            <span className={cn(
+                                "text-[10px] font-medium mt-1 transition-all duration-200",
+                                isActive ? "text-foreground font-semibold" : "text-muted-foreground"
+                            )}>
+                                {item.label}
+                            </span>
+                            {isActive && (
+                                <div className="absolute bottom-1 w-1 h-1 rounded-full bg-primary" />
+                            )}
                         </Link>
                     );
                 })}

@@ -3,149 +3,193 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import Link from 'next/link';
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-  type CarouselApi,
-} from '@/components/ui/carousel';
-import { Card, CardContent } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, LayoutDashboard, Boxes, QrCode, Users } from 'lucide-react';
-import { Progress } from '@/components/ui/progress';
-import streetVendorImg from '@/image/Street Vendor and Modern Payment Interaction (1).png';
-import inventoryimg from '@/image/inventory.png'
-const onboardingSteps = [
+import { ArrowRight, LayoutDashboard, Boxes, QrCode, Users, Sparkles, ChevronRight, Check } from 'lucide-react';
+
+const features = [
   {
     icon: LayoutDashboard,
-    title: 'Welcome to Township Trader',
-    description: "Your all-in-one toolkit for managing your small business with ease. Let's get you started.",
-    image: 'https://picsum.photos/800/600',
-    dataAiHint: 'welcome business',
+    title: 'Smart Dashboard',
+    description: 'Real-time insights into your business performance with beautiful analytics.',
+    gradient: 'from-emerald-500 to-teal-500',
+    delay: '0ms',
   },
   {
     icon: Boxes,
-    title: 'Inventory Management',
-    description: 'Easily track your products, update stock levels, and get low-stock alerts so you never run out.',
-    image: 'https://picsum.photos/800/600',
-    dataAiHint: 'products inventory',
+    title: 'Inventory Control',
+    description: 'Never run out of stock. Get alerts and track every product effortlessly.',
+    gradient: 'from-blue-500 to-indigo-500',
+    delay: '100ms',
   },
   {
     icon: QrCode,
-    title: 'Seamless Payments',
-    description: 'Generate QR codes for quick, easy, and secure digital payments from your customers.',
-    image: 'https://picsum.photos/800/600',
-    dataAiHint: 'qr code payment',
+    title: 'Instant Payments',
+    description: 'Generate QR codes for seamless, secure digital payments in seconds.',
+    gradient: 'from-purple-500 to-pink-500',
+    delay: '200ms',
   },
   {
     icon: Users,
-    title: 'Customer Engagement',
-    description: 'Manage your customer list and send out promotional SMS messages to drive sales.',
-    image: 'https://picsum.photos/800/600',
-    dataAiHint: 'community people',
+    title: 'Customer Growth',
+    description: 'Build relationships with SMS promotions and customer management.',
+    gradient: 'from-orange-500 to-amber-500',
+    delay: '300ms',
   },
+];
+
+const stats = [
+  { value: '10K+', label: 'Active Traders' },
+  { value: 'R2M+', label: 'Processed Daily' },
+  { value: '99.9%', label: 'Uptime' },
 ];
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const [api, setApi] = useState<CarouselApi>();
-  const [current, setCurrent] = useState(0);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    if (!api) return;
-    setCurrent(api.selectedScrollSnap());
-    api.on('select', () => {
-      setCurrent(api.selectedScrollSnap());
-    });
-  }, [api]);
-
-  // Remove timed redirect; will redirect on button click instead
-
-  const progress = ((current + 1) / onboardingSteps.length) * 100;
+    setMounted(true);
+  }, []);
 
   return (
-    <div className="flex h-screen w-full flex-col items-center justify-center bg-[var(--gradient-1)] p-4 md:p-8">
-      <div className="absolute top-4 right-4 z-10">
-        <Button asChild variant="ghost">
-          <Link href="/dashboard">Skip</Link>
-        </Button>
-      </div>
-      <div className="flex items-center gap-3 mb-6 animate-in fade-in slide-in-from-top-4 duration-700">
-        <span className="inline-block rounded-full bg-accent-pink px-3 py-1 text-white text-xs font-bold shadow-lg shadow-accent-pink/20">New!</span>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="h-10 w-10 text-white drop-shadow-md"
-        >
-          <path d="M12 2L2 7l10 5 10-5-10-5z" />
-          <path d="M2 17l10 5 10-5" />
-          <path d="M2 12l10 5 10-5" />
-        </svg>
-        <h1 className="text-4xl font-bold font-headline text-white drop-shadow-md tracking-tight">Township Trader</h1>
+    <div className="min-h-screen bg-slate-950 text-white overflow-hidden">
+      {/* Animated background */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-1/2 -left-1/2 w-full h-full bg-gradient-to-br from-emerald-500/20 via-transparent to-transparent rounded-full blur-3xl animate-pulse" />
+        <div className="absolute -bottom-1/2 -right-1/2 w-full h-full bg-gradient-to-tl from-purple-500/20 via-transparent to-transparent rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-gradient-to-br from-blue-500/10 to-transparent rounded-full blur-3xl" />
       </div>
 
-      <Carousel setApi={setApi} className="w-full max-w-sm md:max-w-xl lg:max-w-3xl">
-        <CarouselContent>
-          {onboardingSteps.map((step, index) => (
-            <CarouselItem key={index}>
-              <Card className="overflow-hidden border-none shadow-2xl bg-white/95 backdrop-blur-sm">
-                <CardContent className="flex flex-col items-center justify-center p-0 text-center">
-                  <div className="relative w-full h-56 md:h-72 bg-accent-green/10">
-                    <Skeleton className="absolute inset-0 w-full h-full" />
-                    <Image
-                      src={step.image}
-                      alt={step.title}
-                      fill
-                      className="object-cover transition-transform duration-500 hover:scale-105"
-                      data-ai-hint={step.dataAiHint}
-                      onLoad={e => e.currentTarget.previousSibling?.remove()}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                    <div className="absolute bottom-4 left-4 right-4 text-left">
-                      <span className="inline-block rounded-full bg-accent-purple/90 backdrop-blur-md px-3 py-1 text-white text-xs font-semibold mb-2 shadow-sm">{step.title}</span>
-                    </div>
-                  </div>
-                  <div className="p-8 space-y-4">
-                    <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-2">
-                      <step.icon className="w-8 h-8 text-primary" />
-                    </div>
-                    <h2 className="text-3xl font-bold text-gray-800 tracking-tight">{step.title}</h2>
-                    <p className="text-muted-foreground max-w-md mx-auto text-lg leading-relaxed">{step.description}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </CarouselItem>
-          ))}
-        </CarouselContent>
-        <CarouselPrevious className="hidden md:flex border-none bg-white/20 hover:bg-white/40 text-white" />
-        <CarouselNext className="hidden md:flex border-none bg-white/20 hover:bg-white/40 text-white" />
-      </Carousel>
+      {/* Grid pattern overlay */}
+      <div className="fixed inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:50px_50px] pointer-events-none" />
 
-      <div className="mt-6 w-full max-w-sm md:max-w-xl lg:max-w-3xl space-y-4">
-        <Progress value={progress} className="h-2" />
-
-        {current === onboardingSteps.length - 1 ? (
-          <Button className="w-full" onClick={() => router.push('/dashboard')}>
-            Get Started <ArrowRight className="ml-2 h-4 w-4" />
+      {/* Navigation */}
+      <nav className="relative z-10 flex items-center justify-between px-6 py-4 md:px-12 md:py-6">
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl blur-lg opacity-50" />
+            <div className="relative bg-gradient-to-r from-emerald-500 to-teal-500 p-2 rounded-xl">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-6 w-6 text-white"
+              >
+                <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                <path d="M2 17l10 5 10-5" />
+                <path d="M2 12l10 5 10-5" />
+              </svg>
+            </div>
+          </div>
+          <span className="text-xl font-bold font-headline">TradaHub</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <Button asChild variant="ghost" className="text-white/70 hover:text-white hover:bg-white/10">
+            <Link href="/login">Sign In</Link>
           </Button>
-        ) : (
-          <div className="flex justify-center md:hidden">
-            <Button onClick={() => api?.scrollNext()} size="lg">
-              Next <ArrowRight className="ml-2 h-4 w-4" />
+          <Button asChild className="bg-white/10 hover:bg-white/20 text-white border-0">
+            <Link href="/signup">Get Started</Link>
+          </Button>
+        </div>
+      </nav>
+
+      {/* Hero Section */}
+      <main className="relative z-10 px-6 md:px-12 pt-12 md:pt-20">
+        <div className="max-w-7xl mx-auto">
+          {/* Badge */}
+          <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm mb-8 transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+            <Sparkles className="h-4 w-4 text-amber-400" />
+            <span className="text-sm text-white/80">Empowering 10,000+ entrepreneurs across Africa</span>
+          </div>
+
+          {/* Main Headline */}
+          <h1 className={`text-4xl md:text-6xl lg:text-7xl font-bold font-headline leading-tight mb-6 transition-all duration-700 delay-100 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+            <span className="text-white">Your Business,</span>
+            <br />
+            <span className="bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 bg-clip-text text-transparent">
+              Your Pocket
+            </span>
+          </h1>
+
+          <p className={`text-lg md:text-xl text-white/60 max-w-2xl mb-10 leading-relaxed transition-all duration-700 delay-200 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+            The all-in-one business toolkit for modern entrepreneurs. 
+            Manage inventory, accept digital payments, engage customers, and grow your business — all from one beautiful app.
+          </p>
+
+          {/* CTA Buttons */}
+          <div className={`flex flex-col sm:flex-row gap-4 mb-16 transition-all duration-700 delay-300 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+            <Button 
+              size="lg" 
+              onClick={() => router.push('/signup')}
+              className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white border-0 text-lg px-8 py-6 rounded-xl shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 transition-all duration-300 hover:scale-105"
+            >
+              Create Free Account
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+            <Button 
+              size="lg" 
+              variant="outline"
+              onClick={() => router.push('/login')}
+              className="border-white/20 bg-white/5 hover:bg-white/10 text-white text-lg px-8 py-6 rounded-xl backdrop-blur-sm"
+            >
+              I Have an Account
             </Button>
           </div>
-        )}
-      </div>
+
+          {/* Stats */}
+          <div className={`flex flex-wrap gap-8 md:gap-16 mb-20 transition-all duration-700 delay-400 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+            {stats.map((stat, i) => (
+              <div key={i} className="text-center">
+                <div className="text-3xl md:text-4xl font-bold font-headline bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">
+                  {stat.value}
+                </div>
+                <div className="text-sm text-white/40 mt-1">{stat.label}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Feature Cards */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 pb-20">
+            {features.map((feature, i) => (
+              <div
+                key={i}
+                className={`group relative bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-500 hover:scale-105 hover:border-white/20 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+                style={{ transitionDelay: feature.delay }}
+              >
+                {/* Glow effect on hover */}
+                <div className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-0 group-hover:opacity-10 rounded-2xl transition-opacity duration-500`} />
+                
+                <div className={`inline-flex p-3 rounded-xl bg-gradient-to-br ${feature.gradient} mb-4`}>
+                  <feature.icon className="h-6 w-6 text-white" />
+                </div>
+                
+                <h3 className="text-lg font-semibold font-headline text-white mb-2">
+                  {feature.title}
+                </h3>
+                
+                <p className="text-sm text-white/50 leading-relaxed">
+                  {feature.description}
+                </p>
+
+                {/* Check mark */}
+                <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <div className={`p-1 rounded-full bg-gradient-to-br ${feature.gradient}`}>
+                    <Check className="h-3 w-3 text-white" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </main>
+
+      {/* Bottom gradient fade */}
+      <div className="fixed bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-slate-950 to-transparent pointer-events-none" />
     </div>
   );
 }

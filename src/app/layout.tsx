@@ -1,11 +1,18 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
-import ThemeToggle from '@/components/ui/theme-toggle';
+import { ThemeProvider } from 'next-themes';
 
 export const metadata: Metadata = {
-  title: 'Township Trader Toolkit',
-  description: 'A digital toolkit for small-scale business owners.',
+  title: 'TradaHub | Your Business, Your Pocket',
+  description: 'The all-in-one business toolkit for entrepreneurs. Manage inventory, accept digital payments, track customers, and grow your business — anywhere.',
+  keywords: ['small business', 'digital payments', 'inventory management', 'POS system', 'entrepreneur tools', 'Africa'],
+  authors: [{ name: 'TradaHub Team' }],
+  openGraph: {
+    title: 'TradaHub | Your Business, Your Pocket',
+    description: 'The all-in-one business toolkit for entrepreneurs everywhere.',
+    type: 'website',
+  },
 };
 
 import ShopProviderWrapper from './ShopProviderWrapper';
@@ -19,21 +26,27 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover" />
-        <meta name="theme-color" content="#50C878" />
+        <meta name="theme-color" content="#10b981" />
         <link rel="manifest" href="/manifest.json" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=PT+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap"
           rel="stylesheet"
         />
       </head>
-      <body className="font-body antialiased">
-        <ShopProviderWrapper>
-          {children}
-          <ThemeToggle />
-          <Toaster />
-        </ShopProviderWrapper>
+      <body className="font-body antialiased min-h-screen">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <ShopProviderWrapper>
+            {children}
+            <Toaster />
+          </ShopProviderWrapper>
+        </ThemeProvider>
       </body>
     </html>
   );
