@@ -37,6 +37,7 @@ export default function SidebarNav() {
             asChild
             isActive={pathname === item.href}
             tooltip={item.label}
+            className={pathname === item.href ? "font-bold shadow-sm ring-1 ring-primary/20 bg-gradient-to-r from-primary/10 to-transparent" : ""}
           >
             <Link href={item.href} onClick={handleNavClick}>
               <item.icon />

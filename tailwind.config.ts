@@ -40,6 +40,22 @@ export default {
         accent: {
           DEFAULT: 'hsl(var(--accent))',
           foreground: 'hsl(var(--accent-foreground))',
+          pink: {
+             DEFAULT: 'hsl(var(--accent-pink))',
+             foreground: 'hsl(var(--accent-pink-foreground))',
+          },
+          green: {
+             DEFAULT: 'hsl(var(--accent-green))',
+             foreground: 'hsl(var(--accent-green-foreground))',
+          },
+          purple: {
+             DEFAULT: 'hsl(var(--accent-purple))',
+             foreground: 'hsl(var(--accent-purple-foreground))',
+          },
+          teal: {
+             DEFAULT: 'hsl(var(--accent-teal))',
+             foreground: 'hsl(var(--accent-teal-foreground))',
+          },
         },
         destructive: {
           DEFAULT: 'hsl(var(--destructive))',

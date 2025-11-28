@@ -69,62 +69,66 @@ export default function OnboardingPage() {
   const progress = ((current + 1) / onboardingSteps.length) * 100;
 
   return (
-  <div className="flex h-screen w-full flex-col items-center justify-center bg-[var(--gradient-1)] p-4 md:p-8">
-       <div className="absolute top-4 right-4 z-10">
+    <div className="flex h-screen w-full flex-col items-center justify-center bg-[var(--gradient-1)] p-4 md:p-8">
+      <div className="absolute top-4 right-4 z-10">
         <Button asChild variant="ghost">
           <Link href="/dashboard">Skip</Link>
         </Button>
       </div>
-      <div className="flex items-center gap-3 mb-6">
-        <span className="inline-block rounded-full bg-[hsl(var(--accent-pink))] px-3 py-1 text-white text-xs font-bold shadow">New!</span>
+      <div className="flex items-center gap-3 mb-6 animate-in fade-in slide-in-from-top-4 duration-700">
+        <span className="inline-block rounded-full bg-accent-pink px-3 py-1 text-white text-xs font-bold shadow-lg shadow-accent-pink/20">New!</span>
         <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="h-10 w-10 text-primary"
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="h-10 w-10 text-white drop-shadow-md"
         >
-            <path d="M12 2L2 7l10 5 10-5-10-5z" />
-            <path d="M2 17l10 5 10-5" />
-            <path d="M2 12l10 5 10-5" />
+          <path d="M12 2L2 7l10 5 10-5-10-5z" />
+          <path d="M2 17l10 5 10-5" />
+          <path d="M2 12l10 5 10-5" />
         </svg>
-        <h1 className="text-3xl font-bold font-headline">Township Trader</h1>
+        <h1 className="text-4xl font-bold font-headline text-white drop-shadow-md tracking-tight">Township Trader</h1>
       </div>
-      
+
       <Carousel setApi={setApi} className="w-full max-w-sm md:max-w-xl lg:max-w-3xl">
         <CarouselContent>
           {onboardingSteps.map((step, index) => (
             <CarouselItem key={index}>
-              <Card className="overflow-hidden">
-                <CardContent className="flex flex-col items-center justify-center p-0 text-center bg-[hsl(var(--accent-green))] bg-opacity-10 rounded-xl shadow-lg">
-                  <div className="relative w-full h-48 md:h-64">
+              <Card className="overflow-hidden border-none shadow-2xl bg-white/95 backdrop-blur-sm">
+                <CardContent className="flex flex-col items-center justify-center p-0 text-center">
+                  <div className="relative w-full h-56 md:h-72 bg-accent-green/10">
                     <Skeleton className="absolute inset-0 w-full h-full" />
                     <Image
                       src={step.image}
                       alt={step.title}
                       fill
-                      className="object-cover"
+                      className="object-cover transition-transform duration-500 hover:scale-105"
                       data-ai-hint={step.dataAiHint}
                       onLoad={e => e.currentTarget.previousSibling?.remove()}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                    <div className="absolute bottom-4 left-4 right-4 text-left">
+                      <span className="inline-block rounded-full bg-accent-purple/90 backdrop-blur-md px-3 py-1 text-white text-xs font-semibold mb-2 shadow-sm">{step.title}</span>
+                    </div>
                   </div>
-                  <div className="p-6 space-y-3">
-                    <span className="inline-block rounded-full bg-[hsl(var(--accent-purple))] px-2 py-1 text-white text-xs font-semibold mb-2">{step.title}</span>
-                    <step.icon className="w-10 h-10 mx-auto text-primary" />
-                    <h2 className="text-2xl font-bold text-[hsl(var(--accent-teal))] drop-shadow">{step.title}</h2>
-                    <p className="text-muted-foreground max-w-md mx-auto">{step.description}</p>
+                  <div className="p-8 space-y-4">
+                    <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-2">
+                      <step.icon className="w-8 h-8 text-primary" />
+                    </div>
+                    <h2 className="text-3xl font-bold text-gray-800 tracking-tight">{step.title}</h2>
+                    <p className="text-muted-foreground max-w-md mx-auto text-lg leading-relaxed">{step.description}</p>
                   </div>
                 </CardContent>
               </Card>
             </CarouselItem>
           ))}
         </CarouselContent>
-        <CarouselPrevious className="hidden md:flex" />
-        <CarouselNext className="hidden md:flex" />
+        <CarouselPrevious className="hidden md:flex border-none bg-white/20 hover:bg-white/40 text-white" />
+        <CarouselNext className="hidden md:flex border-none bg-white/20 hover:bg-white/40 text-white" />
       </Carousel>
 
       <div className="mt-6 w-full max-w-sm md:max-w-xl lg:max-w-3xl space-y-4">
@@ -135,11 +139,11 @@ export default function OnboardingPage() {
             Get Started <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         ) : (
-           <div className="flex justify-center md:hidden">
-             <Button onClick={() => api?.scrollNext()} size="lg">
-                Next <ArrowRight className="ml-2 h-4 w-4" />
-             </Button>
-           </div>
+          <div className="flex justify-center md:hidden">
+            <Button onClick={() => api?.scrollNext()} size="lg">
+              Next <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
         )}
       </div>
     </div>
