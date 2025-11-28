@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -9,8 +9,8 @@ import {
   CardContent,
   CardDescription,
 } from '@/components/ui/card';
-import { Send, UserPlus, Users, Phone, Calendar, MessageSquare, Trash2, Sparkles } from 'lucide-react';
-import { initialCustomers, type Customer } from '@/lib/data';
+import { Send, UserPlus, Users, Phone, Calendar, MessageSquare, Trash2, Sparkles, Loader2 } from 'lucide-react';
+import { useShop, type Customer } from '@/context/ShopContext';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import AddCustomerDialog from './components/add-customer-dialog';
@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 export default function CustomersPage() {
-  const [customers, setCustomers] = useState<Customer[]>(initialCustomers);
+  const { customers, addCustomer, deleteCustomer, isLoading } = useShop();
   const [message, setMessage] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSending, setIsSending] = useState(false);
@@ -48,27 +48,32 @@ export default function CustomersPage() {
     setIsSending(false);
   };
 
-  const handleAddCustomer = (newCustomer: Omit<Customer, 'id' | 'joined'>) => {
-    const customer: Customer = {
-      ...newCustomer,
-      id: `C-${Date.now()}`,
-      joined: new Date().toISOString().split('T')[0],
-    };
-    setCustomers((current) => [customer, ...current]);
-    toast({
-      title: 'Customer Added',
-      description: `${newCustomer.name} has been added to your list.`,
-      className: "bg-emerald-50 border-emerald-200 text-emerald-800",
-    });
+  const handleAddCustomer = async (newCustomer: Omit<Customer, 'id' | 'joined'>) => {
+    const customer = await addCustomer(newCustomer);
+    if (customer) {
+      toast({
+        title: 'Customer Added',
+        description: `${newCustomer.name} has been added to your list.`,
+        className: "bg-emerald-50 border-emerald-200 text-emerald-800",
+      });
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to add customer. Please try again.',
+      });
+    }
   };
 
-  const handleRemoveCustomer = (id: string) => {
+  const handleRemoveCustomer = async (id: string) => {
     const customer = customers.find(c => c.id === id);
-    setCustomers((current) => current.filter((c) => c.id !== id));
-    toast({
-      title: 'Customer Removed',
-      description: `${customer?.name} has been removed from your list.`,
-    });
+    const success = await deleteCustomer(id);
+    if (success) {
+      toast({
+        title: 'Customer Removed',
+        description: `${customer?.name} has been removed from your list.`,
+      });
+    }
   };
 
   const getInitials = (name: string) => {
@@ -86,6 +91,15 @@ export default function CustomersPage() {
     const index = name.charCodeAt(0) % colors.length;
     return colors[index];
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-muted-foreground">Loading customers...</p>
+      </div>
+    );
+  }
 
   return (
     <>

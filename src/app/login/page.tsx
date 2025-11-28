@@ -1,14 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/context/AuthContext";
 import {
   Store,
   Mail,
@@ -20,9 +21,21 @@ import {
   Loader2,
 } from "lucide-react";
 
-export default function LoginPage() {
+// Loading fallback component
+function LoginLoading() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
+    </div>
+  );
+}
+
+// Main login content component
+function LoginContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
+  const { signIn, signInWithGoogle, isAuthenticated, isLoading: authLoading } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -31,38 +44,76 @@ export default function LoginPage() {
     rememberMe: false,
   });
 
+  // Get redirect URL from query params
+  const redirectTo = searchParams.get("redirectTo") || "/dashboard";
+
+  // Handle auth callback errors
+  useEffect(() => {
+    const error = searchParams.get("error");
+    if (error === "auth_callback_error") {
+      toast({
+        variant: "destructive",
+        title: "Authentication Error",
+        description: "There was a problem signing you in. Please try again.",
+      });
+    }
+  }, [searchParams, toast]);
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated && !authLoading) {
+      router.push(redirectTo);
+    }
+  }, [isAuthenticated, authLoading, router, redirectTo]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulate login
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    const { error } = await signIn(formData.email, formData.password);
 
-    // Mock validation
-    if (formData.email && formData.password) {
-      toast({
-        title: "✅ Welcome back!",
-        description: "You have successfully logged in.",
-      });
-      
-      // Store auth state (mock)
-      localStorage.setItem("tradahub-auth", JSON.stringify({
-        isLoggedIn: true,
-        email: formData.email,
-        loginTime: new Date().toISOString(),
-      }));
-      
-      router.push("/dashboard");
-    } else {
+    if (error) {
       toast({
         variant: "destructive",
         title: "Login Failed",
-        description: "Please check your credentials and try again.",
+        description: error.message || "Please check your credentials and try again.",
       });
+      setIsLoading(false);
+      return;
     }
 
+    toast({
+      title: "✅ Welcome back!",
+      description: "You have successfully logged in.",
+    });
+    
+    router.push(redirectTo);
     setIsLoading(false);
   };
+
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true);
+    const { error } = await signInWithGoogle();
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Google Sign-in Failed",
+        description: error.message || "Could not sign in with Google. Please try again.",
+      });
+      setIsLoading(false);
+    }
+    // Note: Google sign-in redirects to callback, so we don't need to handle success here
+  };
+
+  // Show loading state while checking auth
+  if (authLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+        <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
+      </div>
+    );
+  }
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4">
@@ -193,6 +244,8 @@ export default function LoginPage() {
             <div className="grid grid-cols-2 gap-3">
               <Button
                 variant="outline"
+                onClick={handleGoogleSignIn}
+                disabled={isLoading}
                 className="h-12 border-slate-700 bg-slate-800/50 text-white hover:bg-slate-800"
               >
                 <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
@@ -217,6 +270,7 @@ export default function LoginPage() {
               </Button>
               <Button
                 variant="outline"
+                disabled={isLoading}
                 className="h-12 border-slate-700 bg-slate-800/50 text-white hover:bg-slate-800"
               >
                 <Smartphone className="mr-2 h-5 w-5" />
@@ -247,5 +301,14 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+// Export wrapped in Suspense for Next.js 15 compatibility
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<LoginLoading />}>
+      <LoginContent />
+    </Suspense>
   );
 }

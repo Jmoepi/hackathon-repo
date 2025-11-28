@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/context/AuthContext";
 import {
   Store,
   User,
@@ -124,11 +125,19 @@ const provinces = [
 export default function SignupPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { signUp, isAuthenticated, isLoading: authLoading } = useAuth();
   const [step, setStep] = useState<Step>(1);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<FormData>(initialFormData);
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated && !authLoading) {
+      router.push("/dashboard");
+    }
+  }, [isAuthenticated, authLoading, router]);
 
   const updateForm = (field: keyof FormData, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -190,32 +199,70 @@ export default function SignupPage() {
     
     setIsLoading(true);
     
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    // Build full address
+    const fullAddress = `${formData.streetAddress}, ${formData.city}, ${formData.province} ${formData.postalCode}`;
     
-    // Save user data
+    // Sign up with Supabase
+    const { error, needsEmailConfirmation } = await signUp(formData.email, formData.password, {
+      first_name: formData.firstName,
+      last_name: formData.lastName,
+      phone: formData.phone,
+      business_name: formData.businessName,
+      business_type: formData.businessType,
+      business_address: fullAddress,
+      vat_number: formData.showVAT ? formData.vatNumber : undefined,
+      receipt_header: formData.receiptHeader || formData.businessName,
+      receipt_footer: formData.receiptFooter,
+    });
+    
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Signup Failed",
+        description: error.message || "Could not create your account. Please try again.",
+      });
+      setIsLoading(false);
+      return;
+    }
+    
+    // Save additional data to localStorage as backup (for onboarding completion)
     const userData = {
       ...formData,
-      password: undefined, // Don't store password in localStorage
+      password: undefined,
       confirmPassword: undefined,
       createdAt: new Date().toISOString(),
     };
-    
     localStorage.setItem("tradahub-profile", JSON.stringify(userData));
-    localStorage.setItem("tradahub-auth", JSON.stringify({
-      isLoggedIn: true,
-      email: formData.email,
-      loginTime: new Date().toISOString(),
-    }));
     
+    if (needsEmailConfirmation) {
+      // Email confirmation required - redirect to OTP verification page
+      toast({
+        title: "📧 Verification Code Sent!",
+        description: `Enter the 6-digit code sent to ${formData.email}`,
+      });
+      router.push(`/verify-otp?email=${encodeURIComponent(formData.email)}`);
+      setIsLoading(false);
+      return;
+    }
+    
+    // If no email confirmation needed (e.g., email auth disabled), go to dashboard
     toast({
       title: "🎉 Account Created!",
-      description: "Welcome to TradaHub. Let's grow your business!",
+      description: "Welcome to TradaHub!",
     });
     
     router.push("/dashboard");
     setIsLoading(false);
   };
+
+  // Show loading state while checking auth
+  if (authLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+        <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
+      </div>
+    );
+  }
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4 py-8">

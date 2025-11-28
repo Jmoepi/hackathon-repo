@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/context/AuthContext";
+import { useShop } from "@/context/ShopContext";
+import { uploadAvatar, deleteAvatar } from "@/lib/supabase/services/storage";
 import {
   User,
   Building2,
@@ -26,90 +29,234 @@ import {
   Package,
   Receipt,
   Clock,
+  Loader2,
+  Trash2,
+  LogOut,
 } from "lucide-react";
 
-interface UserProfile {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  idNumber: string;
-  dateOfBirth: string;
+// Helper function to calculate time since a date
+function getTimeSince(date: Date): string {
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
   
-  businessName: string;
-  businessType: string;
-  businessAddress: string;
-  businessCity: string;
-  businessProvince: string;
-  businessPostalCode: string;
-  businessPhone: string;
-  vatNumber: string;
-  
-  receiptHeader: string;
-  receiptFooter: string;
-  
-  joinedDate: string;
-  accountTier: string;
+  if (diffDays < 1) return "Today";
+  if (diffDays < 7) return `${diffDays} days`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks`;
+  if (diffDays < 365) return `${Math.floor(diffDays / 30)} months`;
+  return `${Math.floor(diffDays / 365)} years`;
 }
 
 export default function ProfilePage() {
   const { toast } = useToast();
+  const { user, profile, updateProfile: updateAuthProfile, signOut } = useAuth();
+  const { products, transactions } = useShop();
+  
   const [isEditing, setIsEditing] = useState(false);
-  const [profile, setProfile] = useState<UserProfile>({
-    firstName: "Thabo",
-    lastName: "Mokoena",
-    email: "thabo@example.com",
-    phone: "071 234 5678",
-    idNumber: "******* *** *",
-    dateOfBirth: "1990-05-15",
-    
-    businessName: "Thabo's Spaza Shop",
-    businessType: "Spaza Shop",
-    businessAddress: "123 Khayelitsha Drive",
-    businessCity: "Cape Town",
-    businessProvince: "Western Cape",
-    businessPostalCode: "7784",
-    businessPhone: "021 123 4567",
-    vatNumber: "",
-    
-    receiptHeader: "Thabo's Spaza Shop",
-    receiptFooter: "Thank you for shopping with us!",
-    
-    joinedDate: "2024-01-15",
-    accountTier: "Pro",
+  const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Local form state
+  const [formData, setFormData] = useState({
+    first_name: "",
+    last_name: "",
+    email: "",
+    phone: "",
+    id_number: "",
+    date_of_birth: "",
+    business_name: "",
+    business_type: "Spaza Shop",
+    business_address: "",
+    business_city: "",
+    business_province: "Gauteng",
+    business_postal_code: "",
+    business_phone: "",
+    vat_number: "",
+    receipt_header: "",
+    receipt_footer: "Thank you for shopping with us!",
   });
 
+  // Load profile data when available
   useEffect(() => {
-    // Load profile from localStorage
-    const savedProfile = localStorage.getItem("tradahub-profile");
-    if (savedProfile) {
-      setProfile(JSON.parse(savedProfile));
+    if (profile) {
+      setFormData({
+        first_name: profile.first_name || "",
+        last_name: profile.last_name || "",
+        email: user?.email || profile.email || "",
+        phone: profile.phone || "",
+        id_number: profile.id_number || "",
+        date_of_birth: profile.date_of_birth || "",
+        business_name: profile.business_name || "",
+        business_type: profile.business_type || "Spaza Shop",
+        business_address: profile.business_address || "",
+        business_city: profile.business_city || "",
+        business_province: profile.business_province || "Gauteng",
+        business_postal_code: profile.business_postal_code || "",
+        business_phone: profile.business_phone || "",
+        vat_number: profile.vat_number || "",
+        receipt_header: profile.receipt_header || profile.business_name || "",
+        receipt_footer: profile.receipt_footer || "Thank you for shopping with us!",
+      });
     }
-  }, []);
+  }, [profile, user]);
 
-  const handleSaveProfile = () => {
-    localStorage.setItem("tradahub-profile", JSON.stringify(profile));
-    setIsEditing(false);
-    toast({
-      title: "✅ Profile Updated",
-      description: "Your profile has been saved successfully.",
-    });
+  const handleSaveProfile = async () => {
+    setIsSaving(true);
+    try {
+      await updateAuthProfile(formData);
+      setIsEditing(false);
+      toast({
+        title: "✅ Profile Updated",
+        description: "Your profile has been saved successfully.",
+      });
+    } catch (error) {
+      console.error("Error saving profile:", error);
+      toast({
+        title: "❌ Error",
+        description: "Failed to save profile. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const updateProfile = (key: keyof UserProfile, value: string) => {
-    setProfile((prev) => ({ ...prev, [key]: value }));
+  const handleAvatarClick = () => {
+    if (isEditing && fileInputRef.current) {
+      fileInputRef.current.click();
+    }
   };
 
-  // Stats (mock data)
+  const handleAvatarChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user) return;
+
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      toast({
+        title: "❌ Invalid file type",
+        description: "Please upload a JPEG, PNG, GIF, or WebP image.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "❌ File too large",
+        description: "Please upload an image smaller than 5MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+    try {
+      const { url, error } = await uploadAvatar(user.id, file);
+      
+      if (error) {
+        throw error;
+      }
+
+      if (url) {
+        // Update local profile state with new avatar URL
+        await updateAuthProfile({ avatar_url: url });
+        toast({
+          title: "✅ Avatar Updated",
+          description: "Your profile picture has been updated.",
+        });
+      }
+    } catch (error) {
+      console.error("Error uploading avatar:", error);
+      toast({
+        title: "❌ Upload Failed",
+        description: "Failed to upload avatar. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploadingAvatar(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const handleDeleteAvatar = async () => {
+    if (!user) return;
+    
+    setIsUploadingAvatar(true);
+    try {
+      const { error } = await deleteAvatar(user.id);
+      
+      if (error) {
+        throw error;
+      }
+
+      await updateAuthProfile({ avatar_url: null });
+      toast({
+        title: "✅ Avatar Removed",
+        description: "Your profile picture has been removed.",
+      });
+    } catch (error) {
+      console.error("Error deleting avatar:", error);
+      toast({
+        title: "❌ Delete Failed",
+        description: "Failed to remove avatar. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast({
+        title: "👋 Signed Out",
+        description: "You have been logged out successfully.",
+      });
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
+  };
+
+  const updateFormData = (key: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [key]: value }));
+  };
+
+  // Get initials for avatar fallback
+  const getInitials = () => {
+    const first = formData.first_name?.[0] || "";
+    const last = formData.last_name?.[0] || "";
+    return (first + last).toUpperCase() || "U";
+  };
+
+  // Calculate stats from real data
   const stats = {
-    totalSales: 15420,
-    totalTransactions: 342,
-    totalProducts: 48,
-    memberSince: "11 months",
+    totalSales: transactions.reduce((sum, t) => sum + t.amount, 0),
+    totalTransactions: transactions.length,
+    totalProducts: products.length,
+    memberSince: profile?.created_at 
+      ? getTimeSince(new Date(profile.created_at))
+      : "New member",
   };
 
   return (
     <div className="space-y-6 pb-20 lg:pb-6">
+      {/* Hidden file input for avatar upload */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleAvatarChange}
+        accept="image/jpeg,image/png,image/gif,image/webp"
+        className="hidden"
+      />
+
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
@@ -125,9 +272,15 @@ export default function ProfilePage() {
         </div>
         <Button
           onClick={isEditing ? handleSaveProfile : () => setIsEditing(true)}
+          disabled={isSaving}
           className={isEditing ? "gap-2 bg-emerald-500 hover:bg-emerald-600" : "gap-2"}
         >
-          {isEditing ? (
+          {isSaving ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Saving...
+            </>
+          ) : isEditing ? (
             <>
               <Save className="h-4 w-4" />
               Save Changes
@@ -149,15 +302,36 @@ export default function ProfilePage() {
             {/* Avatar */}
             <div className="relative -mt-16 sm:-mt-12">
               <Avatar className="h-28 w-28 border-4 border-background shadow-xl">
-                <AvatarImage src="https://api.dicebear.com/7.x/avataaars/svg?seed=trader" />
+                <AvatarImage 
+                  src={profile?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.id || 'default'}`} 
+                />
                 <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-500 text-2xl font-bold text-white">
-                  {profile.firstName[0]}{profile.lastName[0]}
+                  {getInitials()}
                 </AvatarFallback>
               </Avatar>
               {isEditing && (
-                <button className="absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-110">
-                  <Camera className="h-4 w-4" />
-                </button>
+                <div className="absolute -bottom-2 -right-2 flex gap-1">
+                  <button 
+                    onClick={handleAvatarClick}
+                    disabled={isUploadingAvatar}
+                    className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-110 disabled:opacity-50"
+                  >
+                    {isUploadingAvatar ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Camera className="h-4 w-4" />
+                    )}
+                  </button>
+                  {profile?.avatar_url && (
+                    <button 
+                      onClick={handleDeleteAvatar}
+                      disabled={isUploadingAvatar}
+                      className="flex h-8 w-8 items-center justify-center rounded-full bg-red-500 text-white shadow-lg transition-transform hover:scale-110 disabled:opacity-50"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
               )}
             </div>
             
@@ -165,23 +339,27 @@ export default function ProfilePage() {
             <div className="mt-4 flex-1 text-center sm:mt-0 sm:text-left">
               <div className="flex flex-col items-center gap-2 sm:flex-row">
                 <h2 className="text-2xl font-bold">
-                  {profile.firstName} {profile.lastName}
+                  {formData.first_name || formData.last_name 
+                    ? `${formData.first_name} ${formData.last_name}`.trim()
+                    : "Your Name"}
                 </h2>
                 <Badge className="bg-gradient-to-r from-amber-500 to-orange-500">
                   <Star className="mr-1 h-3 w-3" />
-                  {profile.accountTier}
+                  Pro
                 </Badge>
               </div>
-              <p className="text-muted-foreground">{profile.businessName}</p>
+              <p className="text-muted-foreground">{formData.business_name || "Your Business"}</p>
               <div className="mt-2 flex flex-wrap items-center justify-center gap-4 text-sm text-muted-foreground sm:justify-start">
                 <span className="flex items-center gap-1">
                   <Mail className="h-4 w-4" />
-                  {profile.email}
+                  {formData.email || "email@example.com"}
                 </span>
-                <span className="flex items-center gap-1">
-                  <Phone className="h-4 w-4" />
-                  {profile.phone}
-                </span>
+                {formData.phone && (
+                  <span className="flex items-center gap-1">
+                    <Phone className="h-4 w-4" />
+                    {formData.phone}
+                  </span>
+                )}
               </div>
             </div>
 
@@ -257,20 +435,20 @@ export default function ProfilePage() {
           <CardContent className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="firstName">First Name</Label>
+                <Label htmlFor="first_name">First Name</Label>
                 <Input
-                  id="firstName"
-                  value={profile.firstName}
-                  onChange={(e) => updateProfile("firstName", e.target.value)}
+                  id="first_name"
+                  value={formData.first_name}
+                  onChange={(e) => updateFormData("first_name", e.target.value)}
                   disabled={!isEditing}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="lastName">Last Name</Label>
+                <Label htmlFor="last_name">Last Name</Label>
                 <Input
-                  id="lastName"
-                  value={profile.lastName}
-                  onChange={(e) => updateProfile("lastName", e.target.value)}
+                  id="last_name"
+                  value={formData.last_name}
+                  onChange={(e) => updateFormData("last_name", e.target.value)}
                   disabled={!isEditing}
                 />
               </div>
@@ -280,38 +458,42 @@ export default function ProfilePage() {
               <Input
                 id="email"
                 type="email"
-                value={profile.email}
-                onChange={(e) => updateProfile("email", e.target.value)}
-                disabled={!isEditing}
+                value={formData.email}
+                disabled
+                className="bg-muted"
               />
+              <p className="text-xs text-muted-foreground">
+                Email cannot be changed. Contact support if needed.
+              </p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone Number</Label>
                 <Input
                   id="phone"
-                  value={profile.phone}
-                  onChange={(e) => updateProfile("phone", e.target.value)}
+                  value={formData.phone}
+                  onChange={(e) => updateFormData("phone", e.target.value)}
                   disabled={!isEditing}
+                  placeholder="071 234 5678"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="dob">Date of Birth</Label>
+                <Label htmlFor="date_of_birth">Date of Birth</Label>
                 <Input
-                  id="dob"
+                  id="date_of_birth"
                   type="date"
-                  value={profile.dateOfBirth}
-                  onChange={(e) => updateProfile("dateOfBirth", e.target.value)}
+                  value={formData.date_of_birth}
+                  onChange={(e) => updateFormData("date_of_birth", e.target.value)}
                   disabled={!isEditing}
                 />
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="idNumber">ID Number</Label>
+              <Label htmlFor="id_number">ID Number</Label>
               <Input
-                id="idNumber"
-                value={profile.idNumber}
-                onChange={(e) => updateProfile("idNumber", e.target.value)}
+                id="id_number"
+                value={formData.id_number}
+                onChange={(e) => updateFormData("id_number", e.target.value)}
                 disabled={!isEditing}
                 placeholder="South African ID Number"
               />
@@ -334,23 +516,23 @@ export default function ProfilePage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="businessName">Business Name</Label>
+              <Label htmlFor="business_name">Business Name</Label>
               <Input
-                id="businessName"
-                value={profile.businessName}
-                onChange={(e) => updateProfile("businessName", e.target.value)}
+                id="business_name"
+                value={formData.business_name}
+                onChange={(e) => updateFormData("business_name", e.target.value)}
                 disabled={!isEditing}
               />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="businessType">Business Type</Label>
+                <Label htmlFor="business_type">Business Type</Label>
                 <select
-                  id="businessType"
-                  value={profile.businessType}
-                  onChange={(e) => updateProfile("businessType", e.target.value)}
+                  id="business_type"
+                  value={formData.business_type}
+                  onChange={(e) => updateFormData("business_type", e.target.value)}
                   disabled={!isEditing}
-                  className="w-full rounded-lg border bg-background p-2.5"
+                  className="w-full rounded-lg border bg-background p-2.5 disabled:opacity-50"
                 >
                   <option value="Spaza Shop">Spaza Shop</option>
                   <option value="Tuck Shop">Tuck Shop</option>
@@ -360,42 +542,42 @@ export default function ProfilePage() {
                 </select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="businessPhone">Business Phone</Label>
+                <Label htmlFor="business_phone">Business Phone</Label>
                 <Input
-                  id="businessPhone"
-                  value={profile.businessPhone}
-                  onChange={(e) => updateProfile("businessPhone", e.target.value)}
+                  id="business_phone"
+                  value={formData.business_phone}
+                  onChange={(e) => updateFormData("business_phone", e.target.value)}
                   disabled={!isEditing}
                 />
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="businessAddress">Street Address</Label>
+              <Label htmlFor="business_address">Street Address</Label>
               <Input
-                id="businessAddress"
-                value={profile.businessAddress}
-                onChange={(e) => updateProfile("businessAddress", e.target.value)}
+                id="business_address"
+                value={formData.business_address}
+                onChange={(e) => updateFormData("business_address", e.target.value)}
                 disabled={!isEditing}
               />
             </div>
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="space-y-2">
-                <Label htmlFor="businessCity">City</Label>
+                <Label htmlFor="business_city">City</Label>
                 <Input
-                  id="businessCity"
-                  value={profile.businessCity}
-                  onChange={(e) => updateProfile("businessCity", e.target.value)}
+                  id="business_city"
+                  value={formData.business_city}
+                  onChange={(e) => updateFormData("business_city", e.target.value)}
                   disabled={!isEditing}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="businessProvince">Province</Label>
+                <Label htmlFor="business_province">Province</Label>
                 <select
-                  id="businessProvince"
-                  value={profile.businessProvince}
-                  onChange={(e) => updateProfile("businessProvince", e.target.value)}
+                  id="business_province"
+                  value={formData.business_province}
+                  onChange={(e) => updateFormData("business_province", e.target.value)}
                   disabled={!isEditing}
-                  className="w-full rounded-lg border bg-background p-2.5"
+                  className="w-full rounded-lg border bg-background p-2.5 disabled:opacity-50"
                 >
                   <option value="Eastern Cape">Eastern Cape</option>
                   <option value="Free State">Free State</option>
@@ -409,21 +591,21 @@ export default function ProfilePage() {
                 </select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="businessPostalCode">Postal Code</Label>
+                <Label htmlFor="business_postal_code">Postal Code</Label>
                 <Input
-                  id="businessPostalCode"
-                  value={profile.businessPostalCode}
-                  onChange={(e) => updateProfile("businessPostalCode", e.target.value)}
+                  id="business_postal_code"
+                  value={formData.business_postal_code}
+                  onChange={(e) => updateFormData("business_postal_code", e.target.value)}
                   disabled={!isEditing}
                 />
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="vatNumber">VAT Number (Optional)</Label>
+              <Label htmlFor="vat_number">VAT Number (Optional)</Label>
               <Input
-                id="vatNumber"
-                value={profile.vatNumber}
-                onChange={(e) => updateProfile("vatNumber", e.target.value)}
+                id="vat_number"
+                value={formData.vat_number}
+                onChange={(e) => updateFormData("vat_number", e.target.value)}
                 disabled={!isEditing}
                 placeholder="e.g., 4123456789"
               />
@@ -448,11 +630,11 @@ export default function ProfilePage() {
             <div className="grid gap-6 lg:grid-cols-2">
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="receiptHeader">Receipt Header Text</Label>
+                  <Label htmlFor="receipt_header">Receipt Header Text</Label>
                   <Input
-                    id="receiptHeader"
-                    value={profile.receiptHeader}
-                    onChange={(e) => updateProfile("receiptHeader", e.target.value)}
+                    id="receipt_header"
+                    value={formData.receipt_header}
+                    onChange={(e) => updateFormData("receipt_header", e.target.value)}
                     disabled={!isEditing}
                     placeholder="Your business name or slogan"
                   />
@@ -461,11 +643,11 @@ export default function ProfilePage() {
                   </p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="receiptFooter">Receipt Footer Message</Label>
+                  <Label htmlFor="receipt_footer">Receipt Footer Message</Label>
                   <Textarea
-                    id="receiptFooter"
-                    value={profile.receiptFooter}
-                    onChange={(e) => updateProfile("receiptFooter", e.target.value)}
+                    id="receipt_footer"
+                    value={formData.receipt_footer}
+                    onChange={(e) => updateFormData("receipt_footer", e.target.value)}
                     disabled={!isEditing}
                     placeholder="Thank you message..."
                     rows={3}
@@ -480,10 +662,10 @@ export default function ProfilePage() {
               <div className="rounded-xl border bg-white p-6 shadow-inner dark:bg-slate-950">
                 <div className="mx-auto max-w-xs space-y-4 font-mono text-sm">
                   <div className="text-center">
-                    <p className="text-lg font-bold">{profile.receiptHeader || profile.businessName}</p>
-                    <p className="text-xs text-muted-foreground">{profile.businessAddress}</p>
-                    <p className="text-xs text-muted-foreground">{profile.businessCity}, {profile.businessPostalCode}</p>
-                    <p className="text-xs text-muted-foreground">Tel: {profile.businessPhone}</p>
+                    <p className="text-lg font-bold">{formData.receipt_header || formData.business_name || "Your Business"}</p>
+                    <p className="text-xs text-muted-foreground">{formData.business_address || "123 Main Street"}</p>
+                    <p className="text-xs text-muted-foreground">{formData.business_city || "City"}, {formData.business_postal_code || "0000"}</p>
+                    <p className="text-xs text-muted-foreground">Tel: {formData.business_phone || "000 000 0000"}</p>
                   </div>
                   <Separator className="border-dashed" />
                   <div className="space-y-1">
@@ -507,7 +689,7 @@ export default function ProfilePage() {
                   </div>
                   <Separator className="border-dashed" />
                   <p className="text-center text-xs text-muted-foreground">
-                    {profile.receiptFooter || "Thank you for your purchase!"}
+                    {formData.receipt_footer || "Thank you for your purchase!"}
                   </p>
                   <p className="text-center text-[10px] text-muted-foreground">
                     {new Date().toLocaleDateString()} {new Date().toLocaleTimeString()}
@@ -545,7 +727,12 @@ export default function ProfilePage() {
                 <Phone className="h-4 w-4" />
                 Verify Phone
               </Button>
-              <Button variant="outline" className="gap-2 text-red-600 hover:text-red-700">
+              <Button 
+                variant="outline" 
+                className="gap-2 text-red-600 hover:text-red-700"
+                onClick={handleSignOut}
+              >
+                <LogOut className="h-4 w-4" />
                 Log Out
               </Button>
             </div>

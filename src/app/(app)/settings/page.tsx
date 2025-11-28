@@ -9,6 +9,15 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/context/AuthContext";
+import {
+  getOrCreateSettings,
+  updateSettings,
+  transformToFrontendSettings,
+  transformToDbSettings,
+  getDefaultFrontendSettings,
+  type FrontendSettings,
+} from "@/lib/supabase/services/settings";
 import {
   Settings,
   Sun,
@@ -24,61 +33,126 @@ import {
   Globe,
   Save,
   Check,
+  Loader2,
 } from "lucide-react";
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [mounted, setMounted] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   
   // Settings state
-  const [settings, setSettings] = useState({
-    // Notifications
-    pushNotifications: true,
-    emailNotifications: true,
-    smsNotifications: false,
-    soundAlerts: true,
-    lowStockAlerts: true,
-    salesAlerts: true,
-    
-    // Receipt Settings
-    showLogo: true,
-    showAddress: true,
-    showPhone: true,
-    showVAT: true,
-    footerMessage: "Thank you for your business!",
-    
-    // Payment Settings
-    defaultPaymentMethod: "cash",
-    enableQRPayments: true,
-    enableCardPayments: false,
-    autoGenerateReceipt: true,
-    
-    // Regional
-    currency: "ZAR",
-    language: "en",
-    dateFormat: "DD/MM/YYYY",
-  });
+  const [settings, setSettings] = useState<FrontendSettings>(getDefaultFrontendSettings());
 
   useEffect(() => {
     setMounted(true);
-    // Load settings from localStorage
-    const savedSettings = localStorage.getItem("tradahub-settings");
-    if (savedSettings) {
-      setSettings(JSON.parse(savedSettings));
-    }
   }, []);
 
-  const handleSaveSettings = () => {
-    localStorage.setItem("tradahub-settings", JSON.stringify(settings));
-    toast({
-      title: "✅ Settings Saved",
-      description: "Your preferences have been updated successfully.",
-    });
+  // Load settings from Supabase
+  useEffect(() => {
+    async function loadSettings() {
+      if (!user) {
+        // Fall back to localStorage if not logged in
+        const savedSettings = localStorage.getItem("tradahub-settings");
+        if (savedSettings) {
+          try {
+            setSettings(JSON.parse(savedSettings));
+          } catch (e) {
+            console.error("Error parsing localStorage settings:", e);
+          }
+        }
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const dbSettings = await getOrCreateSettings(user.id);
+        const frontendSettings = transformToFrontendSettings(dbSettings);
+        setSettings(frontendSettings);
+        
+        // Sync theme with the settings
+        if (frontendSettings.theme) {
+          setTheme(frontendSettings.theme);
+        }
+      } catch (error) {
+        console.error("Error loading settings:", error);
+        // Fall back to localStorage
+        const savedSettings = localStorage.getItem("tradahub-settings");
+        if (savedSettings) {
+          try {
+            setSettings(JSON.parse(savedSettings));
+          } catch (e) {
+            console.error("Error parsing localStorage settings:", e);
+          }
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    if (mounted) {
+      loadSettings();
+    }
+  }, [user, mounted, setTheme]);
+
+  const handleSaveSettings = async () => {
+    setIsSaving(true);
+    
+    try {
+      // Update theme in settings state
+      const updatedSettings = { ...settings, theme: theme as 'light' | 'dark' | 'system' };
+      
+      if (user) {
+        // Save to Supabase
+        const dbSettings = transformToDbSettings(updatedSettings);
+        const { error } = await updateSettings(user.id, dbSettings);
+        
+        if (error) {
+          throw error;
+        }
+      }
+      
+      // Also save to localStorage as backup
+      localStorage.setItem("tradahub-settings", JSON.stringify(updatedSettings));
+      setSettings(updatedSettings);
+      
+      toast({
+        title: "✅ Settings Saved",
+        description: "Your preferences have been updated successfully.",
+      });
+    } catch (error) {
+      console.error("Error saving settings:", error);
+      toast({
+        title: "❌ Error",
+        description: "Failed to save settings. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const updateSetting = (key: string, value: boolean | string) => {
+  const updateSetting = (key: keyof FrontendSettings, value: boolean | string) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
+  };
+
+  // Handle theme change and persist it
+  const handleThemeChange = async (newTheme: 'light' | 'dark' | 'system') => {
+    setTheme(newTheme);
+    setSettings((prev) => ({ ...prev, theme: newTheme }));
+    
+    // Auto-save theme preference
+    if (user) {
+      try {
+        await updateSettings(user.id, { theme: newTheme });
+      } catch (error) {
+        console.error("Error saving theme:", error);
+      }
+    }
+    localStorage.setItem("tradahub-settings", JSON.stringify({ ...settings, theme: newTheme }));
   };
 
   if (!mounted) return null;
@@ -98,9 +172,18 @@ export default function SettingsPage() {
             </p>
           </div>
         </div>
-        <Button onClick={handleSaveSettings} className="gap-2">
-          <Save className="h-4 w-4" />
-          Save Changes
+        <Button onClick={handleSaveSettings} disabled={isSaving} className="gap-2">
+          {isSaving ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            <>
+              <Save className="h-4 w-4" />
+              Save Changes
+            </>
+          )}
         </Button>
       </div>
 
@@ -124,7 +207,7 @@ export default function SettingsPage() {
               <Label className="mb-3 block text-sm font-medium">Theme</Label>
               <div className="grid grid-cols-3 gap-3">
                 <button
-                  onClick={() => setTheme("light")}
+                  onClick={() => handleThemeChange("light")}
                   className={`flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-all ${
                     theme === "light"
                       ? "border-primary bg-primary/5"
@@ -140,7 +223,7 @@ export default function SettingsPage() {
                   )}
                 </button>
                 <button
-                  onClick={() => setTheme("dark")}
+                  onClick={() => handleThemeChange("dark")}
                   className={`flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-all ${
                     theme === "dark"
                       ? "border-primary bg-primary/5"
@@ -156,7 +239,7 @@ export default function SettingsPage() {
                   )}
                 </button>
                 <button
-                  onClick={() => setTheme("system")}
+                  onClick={() => handleThemeChange("system")}
                   className={`flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-all ${
                     theme === "system"
                       ? "border-primary bg-primary/5"

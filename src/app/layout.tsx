@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from 'next-themes';
+import { AuthProvider } from '@/context/AuthContext';
 
 export const metadata: Metadata = {
   title: 'TradaHub | Your Business, Your Pocket',
@@ -42,10 +43,12 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <ShopProviderWrapper>
-            {children}
-            <Toaster />
-          </ShopProviderWrapper>
+          <AuthProvider>
+            <ShopProviderWrapper>
+              {children}
+              <Toaster />
+            </ShopProviderWrapper>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

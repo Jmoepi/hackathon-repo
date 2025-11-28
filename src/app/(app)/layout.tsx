@@ -1,3 +1,5 @@
+"use client"
+
 import type { ReactNode } from 'react';
 import {
   SidebarProvider,
@@ -14,11 +16,38 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { MobileNav } from '@/components/mobile-nav';
 import { NotificationButton } from '@/components/notification-button';
-import { Settings, ChevronRight } from 'lucide-react';
+import { ProtectedRoute } from '@/components/auth/protected-route';
+import { useAuth } from '@/context/AuthContext';
+import { Settings, ChevronRight, LogOut } from 'lucide-react';
+
+// Helper function to get user initials
+function getInitials(firstName?: string | null, lastName?: string | null, businessName?: string | null): string {
+  if (firstName && lastName) {
+    return `${firstName[0]}${lastName[0]}`.toUpperCase();
+  }
+  if (firstName) {
+    return firstName.slice(0, 2).toUpperCase();
+  }
+  if (businessName) {
+    const words = businessName.split(' ');
+    if (words.length >= 2) {
+      return `${words[0][0]}${words[1][0]}`.toUpperCase();
+    }
+    return businessName.slice(0, 2).toUpperCase();
+  }
+  return 'TH';
+}
 
 export default function AppLayout({ children }: { children: ReactNode }) {
+  const { profile, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
+
   return (
-    <SidebarProvider>
+    <ProtectedRoute>
+      <SidebarProvider>
       <Sidebar className="border-r-0">
         <SidebarHeader className="p-6">
           <div className="flex items-center gap-3">
@@ -54,16 +83,29 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           <Link href="/profile" className="block">
             <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-primary/5 to-transparent hover:from-primary/10 transition-colors cursor-pointer group">
               <Avatar className="h-10 w-10 ring-2 ring-primary/20 ring-offset-2 ring-offset-background">
-                <AvatarImage src="https://api.dicebear.com/7.x/avataaars/svg?seed=trader" alt="User" />
-                <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-teal-500 text-white font-semibold">TH</AvatarFallback>
+                <AvatarImage src={profile?.avatar_url || undefined} alt="User" />
+                <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-teal-500 text-white font-semibold">
+                  {getInitials(profile?.first_name, profile?.last_name, profile?.business_name)}
+                </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-foreground truncate">My Business</p>
+                <p className="text-sm font-semibold text-foreground truncate">
+                  {profile?.business_name || profile?.first_name || 'My Business'}
+                </p>
                 <p className="text-xs text-muted-foreground truncate">View Profile</p>
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
             </div>
           </Link>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleSignOut}
+            className="w-full mt-2 text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            Sign Out
+          </Button>
         </SidebarFooter>
       </Sidebar>
       <SidebarInset className="bg-background">
@@ -98,10 +140,12 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               </Link>
             </Button>
             <Button asChild variant="ghost" size="icon" className="lg:hidden hover:bg-primary/10">
-              <Link href="/onboarding">
+              <Link href="/profile">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src="https://api.dicebear.com/7.x/avataaars/svg?seed=trader" alt="User" />
-                  <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-teal-500 text-white text-xs">TH</AvatarFallback>
+                  <AvatarImage src={profile?.avatar_url || undefined} alt="User" />
+                  <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-teal-500 text-white text-xs">
+                    {getInitials(profile?.first_name, profile?.last_name, profile?.business_name)}
+                  </AvatarFallback>
                 </Avatar>
               </Link>
             </Button>
@@ -113,5 +157,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         <MobileNav />
       </SidebarInset>
     </SidebarProvider>
+    </ProtectedRoute>
   );
 }

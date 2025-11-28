@@ -24,7 +24,7 @@ import { useToast } from '@/hooks/use-toast';
 import dynamic from 'next/dynamic';
 const QrCodeDialog = dynamic(() => import('./components/qr-code-dialog'), { ssr: false });
 import { Skeleton } from '@/components/ui/skeleton';
-import { Product } from '@/lib/data';
+import type { Product } from '@/context/ShopContext';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 

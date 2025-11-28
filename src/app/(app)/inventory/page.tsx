@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
-import { useShop } from "@/context/ShopContext";
+import { useShop, type Product } from "@/context/ShopContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -11,7 +11,7 @@ import {
   CardContent,
   CardDescription,
 } from "@/components/ui/card";
-import { Plus, Minus, PlusCircle, AlertTriangle, Search, Package, X, Boxes } from "lucide-react";
+import { Plus, Minus, PlusCircle, AlertTriangle, Search, Package, X, Boxes, Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import AddProductDialog from "./components/add-product-dialog";
 import { cn } from "@/lib/utils";
@@ -19,23 +19,14 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 
-type Product = {
-  id: string;
-  name: string;
-  price: number;
-  stock: number;
-  lowStockThreshold: number;
-};
-
 export default function InventoryPage() {
-  const { products } = useShop();
+  const { products, addProduct, updateProduct, deleteProduct, isLoading } = useShop();
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [stockStatusFilter, setStockStatusFilter] =
     useState<"all" | "low" | "out">("all");
-
-  const [localProducts, setLocalProducts] = useState<Product[]>(products);
+  const [updatingStock, setUpdatingStock] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -44,62 +35,76 @@ export default function InventoryPage() {
   }, []);
 
   const lowStockProducts = useMemo(
-    () => localProducts.filter((p) => p.stock > 0 && p.stock < p.lowStockThreshold),
-    [localProducts]
+    () => products.filter((p) => p.stock > 0 && p.stock < p.lowStockThreshold),
+    [products]
   );
 
   const filteredProducts = useMemo(() => {
-    const bySearch = localProducts.filter((p) =>
+    const bySearch = products.filter((p) =>
       p.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
     if (stockStatusFilter === "low")
       return bySearch.filter((p) => p.stock > 0 && p.stock < p.lowStockThreshold);
     if (stockStatusFilter === "out") return bySearch.filter((p) => p.stock === 0);
     return bySearch;
-  }, [localProducts, searchTerm, stockStatusFilter]);
+  }, [products, searchTerm, stockStatusFilter]);
 
-  const handleStockChange = (id: string, delta: number) => {
-    setLocalProducts((curr) =>
-      curr.map((p) => {
-        if (p.id === id) {
-          const newStock = Math.max(0, p.stock + delta);
-          if (newStock !== p.stock) {
-            toast({
-              title: "Stock Updated",
-              description: `${p.name} stock updated to ${newStock}.`,
-              duration: 2000,
-            });
-          }
-          return { ...p, stock: newStock };
-        }
-        return p;
-      })
-    );
+  const handleStockChange = async (id: string, delta: number) => {
+    const product = products.find(p => p.id === id);
+    if (!product) return;
+    
+    const newStock = Math.max(0, product.stock + delta);
+    if (newStock === product.stock) return;
+    
+    setUpdatingStock(id);
+    const success = await updateProduct(id, { stock: newStock });
+    setUpdatingStock(null);
+    
+    if (success) {
+      toast({
+        title: "Stock Updated",
+        description: `${product.name} stock updated to ${newStock}.`,
+        duration: 2000,
+      });
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Update Failed",
+        description: "Could not update stock. Please try again.",
+      });
+    }
   };
 
-  const handleAddProduct = (product: { name: string; stock: number; price: number }) => {
-    setLocalProducts((curr) => [
-      ...curr,
-      {
-        id: `prod-${Date.now()}`,
-        name: product.name,
-        stock: product.stock,
-        price: product.price,
-        lowStockThreshold: 3,
-      },
-    ]);
-    setIsDialogOpen(false);
-    toast({
-      title: "Product Added",
-      description: `${product.name} has been added to your inventory.`,
-      className: "bg-green-50 border-green-200 text-green-800",
+  const handleAddProduct = async (product: { name: string; stock: number; price: number }) => {
+    const newProduct = await addProduct({
+      name: product.name,
+      stock: product.stock,
+      price: product.price,
+      lowStockThreshold: 3,
     });
+    
+    setIsDialogOpen(false);
+    
+    if (newProduct) {
+      toast({
+        title: "Product Added",
+        description: `${product.name} has been added to your inventory.`,
+        className: "bg-green-50 border-green-200 text-green-800",
+      });
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Failed to Add",
+        description: "Could not add product. Please try again.",
+      });
+    }
   };
 
-  const handleRemoveProduct = (id: string) => {
-    const product = localProducts.find(p => p.id === id);
-    setLocalProducts((curr) => curr.filter((p) => p.id !== id));
-    if (product) {
+  const handleRemoveProduct = async (id: string) => {
+    const product = products.find(p => p.id === id);
+    const success = await deleteProduct(id);
+    
+    if (success && product) {
       toast({
         title: "Product Removed",
         description: `${product.name} has been removed.`,
@@ -108,7 +113,7 @@ export default function InventoryPage() {
     }
   };
 
-  if (loading) {
+  if (loading || isLoading) {
     return (
       <div className="flex flex-col gap-6 animate-pulse">
         <div className="flex justify-between items-center">
@@ -188,13 +193,13 @@ export default function InventoryPage() {
           <Tabs value={stockStatusFilter} onValueChange={(v) => setStockStatusFilter(v as any)} className="w-full">
             <TabsList className="grid w-full grid-cols-3 h-12 p-1 bg-muted/50 rounded-xl">
               <TabsTrigger value="all" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm text-sm">
-                All ({localProducts.length})
+                All ({products.length})
               </TabsTrigger>
               <TabsTrigger value="low" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm text-sm">
                 Low ({lowStockProducts.length})
               </TabsTrigger>
               <TabsTrigger value="out" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm text-sm">
-                Out ({localProducts.filter(p => p.stock === 0).length})
+                Out ({products.filter(p => p.stock === 0).length})
               </TabsTrigger>
             </TabsList>
           </Tabs>
@@ -263,16 +268,23 @@ export default function InventoryPage() {
                         size="icon"
                         className="h-9 w-9 rounded-lg hover:bg-white"
                         onClick={() => handleStockChange(product.id, -1)}
-                        disabled={product.stock === 0}
+                        disabled={product.stock === 0 || updatingStock === product.id}
                       >
                         <Minus className="h-4 w-4" />
                       </Button>
-                      <span className="w-12 text-center font-bold text-lg">{product.stock}</span>
+                      <span className="w-12 text-center font-bold text-lg">
+                        {updatingStock === product.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin mx-auto" />
+                        ) : (
+                          product.stock
+                        )}
+                      </span>
                       <Button
                         variant="ghost"
                         size="icon"
                         className="h-9 w-9 rounded-lg hover:bg-white"
                         onClick={() => handleStockChange(product.id, 1)}
+                        disabled={updatingStock === product.id}
                       >
                         <Plus className="h-4 w-4" />
                       </Button>

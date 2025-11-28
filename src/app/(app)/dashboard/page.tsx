@@ -17,8 +17,9 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { DollarSign, AlertCircle, ShoppingCart, Users, Star, TrendingUp, Plus, Boxes, ArrowUpRight, ArrowDownRight, Sparkles } from "lucide-react";
-import { weeklySalesData, initialCustomers } from "@/lib/data";
+import { weeklySalesData } from "@/lib/data";
 import { useShop } from '@/context/ShopContext';
+import { useAuth } from '@/context/AuthContext';
 import dynamic from 'next/dynamic';
 const SalesChart = dynamic(() => import('./components/sales-chart'), { ssr: false });
 import { Badge } from "@/components/ui/badge";
@@ -26,11 +27,16 @@ import { useState, useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { ProfileCompletionBanner } from "@/components/profile-completion-banner";
 
 const DashboardPage = () => {
-  const { products, transactions } = useShop() || {};
+  const { products, transactions, customers } = useShop() || {};
+  const { profile } = useAuth();
   const [loading, setLoading] = useState(true);
   const [greeting, setGreeting] = useState("Hello");
+
+  // Get the user's display name
+  const userName = profile?.first_name || profile?.business_name || "there";
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -69,7 +75,7 @@ const DashboardPage = () => {
   const lowStockItems = products.filter(p => p.stock > 0 && p.stock < p.lowStockThreshold).length;
   const bestSellers = [...products].sort((a, b) => b.unitsSold - a.unitsSold).slice(0, 4);
   const averageTransactionValue = transactions.length > 0 ? transactions.reduce((acc, t) => acc + t.amount, 0) / transactions.length : 0;
-  const newCustomersThisWeek = initialCustomers.length;
+  const newCustomersThisWeek = customers?.length || 0;
 
   const stats = [
     {
@@ -113,6 +119,9 @@ const DashboardPage = () => {
 
   return (
     <div className="flex flex-col gap-8 animate-fade-up">
+      {/* Profile Completion Banner */}
+      <ProfileCompletionBanner />
+
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
@@ -121,7 +130,7 @@ const DashboardPage = () => {
             <span className="text-sm font-medium text-amber-600 dark:text-amber-400">Welcome back</span>
           </div>
           <h1 className="text-3xl md:text-4xl font-bold font-headline text-foreground tracking-tight">
-            {greeting}, Trader!
+            {greeting}, {userName}!
           </h1>
           <p className="text-muted-foreground mt-1">Here's what's happening with your business today.</p>
         </div>
