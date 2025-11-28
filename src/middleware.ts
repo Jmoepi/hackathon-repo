@@ -6,6 +6,7 @@ const PUBLIC_ROUTES = [
   "/",
   "/login",
   "/signup",
+  "/signup-simple",
   "/verify-otp",
   "/forgot-password",
   "/auth/callback",
@@ -13,7 +14,7 @@ const PUBLIC_ROUTES = [
   "/onboarding",
 ]
 
-const AUTH_ROUTES = ["/login", "/signup", "/verify-otp", "/forgot-password"]
+const AUTH_ROUTES = ["/login", "/signup", "/signup-simple", "/verify-otp", "/forgot-password"]
 
 const PROTECTED_ROUTES = [
   "/dashboard",
@@ -96,17 +97,24 @@ export async function middleware(request: NextRequest) {
       error,
     } = await supabase.auth.getUser()
 
-    // Handle auth errors
-    if (error) {
+    // Handle auth errors (but not "session missing" which is expected for logged-out users)
+    if (error && !error.message.includes("session")) {
       console.error("Auth error in middleware:", error.message)
-      // Clear potentially corrupted session
-      if (error.message.includes("token")) {
+      // Clear potentially corrupted session cookies
+      if (error.message.includes("token") || error.message.includes("invalid")) {
         response.cookies.delete("sb-access-token")
         response.cookies.delete("sb-refresh-token")
+        // Also clear Supabase auth cookies
+        const cookieNames = request.cookies.getAll().map(c => c.name)
+        cookieNames.forEach(name => {
+          if (name.startsWith("sb-")) {
+            response.cookies.delete(name)
+          }
+        })
       }
     }
 
-    const isAuthenticated = !!user && !error
+    const isAuthenticated = !!user
     const isPublicRoute = PUBLIC_ROUTES.some(
       (route) => pathname === route || pathname.startsWith(route + "/")
     )
