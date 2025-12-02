@@ -8,8 +8,6 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-  // Faster builds with SWC minification (default in Next 15)
-  swcMinify: true,
   // Reduce build output for faster builds
   productionBrowserSourceMaps: false,
   images: {

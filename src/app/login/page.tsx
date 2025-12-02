@@ -70,25 +70,71 @@ function LoginContent() {
     e.preventDefault();
     setIsLoading(true);
 
-    const { error } = await signIn(formData.email, formData.password);
-
-    if (error) {
+    // Basic validation
+    if (!formData.email.trim()) {
       toast({
         variant: "destructive",
-        title: "Login Failed",
-        description: error.message || "Please check your credentials and try again.",
+        title: "Email Required",
+        description: "Please enter your email address.",
       });
       setIsLoading(false);
       return;
     }
 
-    toast({
-      title: "✅ Welcome back!",
-      description: "You have successfully logged in.",
-    });
-    
-    router.push(redirectTo);
-    setIsLoading(false);
+    if (!formData.password) {
+      toast({
+        variant: "destructive",
+        title: "Password Required",
+        description: "Please enter your password.",
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const { error } = await signIn(formData.email, formData.password);
+
+      if (error) {
+        // Determine the appropriate title based on error type
+        const errorMessage = error.message || '';
+        let title = "Login Failed";
+        
+        if (errorMessage.includes('verify your email')) {
+          title = "Email Not Verified";
+        } else if (errorMessage.includes('No account found')) {
+          title = "Account Not Found";
+        } else if (errorMessage.includes('Too many')) {
+          title = "Too Many Attempts";
+        } else if (errorMessage.includes('Unable to connect')) {
+          title = "Connection Error";
+        }
+
+        toast({
+          variant: "destructive",
+          title,
+          description: errorMessage || "Please check your credentials and try again.",
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      toast({
+        title: "✅ Welcome back!",
+        description: "You have successfully logged in.",
+      });
+      
+      router.push(redirectTo);
+    } catch (err) {
+      // Handle unexpected errors gracefully
+      console.error("Unexpected login error:", err);
+      toast({
+        variant: "destructive",
+        title: "Something went wrong",
+        description: "We couldn't sign you in. Please try again later.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleGoogleSignIn = async () => {
@@ -278,13 +324,16 @@ function LoginContent() {
               </Button>
             </div>
           </CardContent>
-          <CardFooter className="justify-center border-t border-slate-700 pt-6">
+          <CardFooter className="flex-col gap-3 border-t border-slate-700 pt-6">
             <p className="text-sm text-slate-400">
               Don&apos;t have an account?{" "}
               <Link href="/signup" className="font-semibold text-emerald-400 hover:text-emerald-300">
                 Sign up free
               </Link>
             </p>
+            <Link href="/pricing" className="text-sm text-slate-500 hover:text-slate-300">
+              View pricing plans →
+            </Link>
           </CardFooter>
         </Card>
 

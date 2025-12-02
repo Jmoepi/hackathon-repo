@@ -180,6 +180,35 @@ export function AuthProvider({ children }: AuthProviderProps) {
       })
 
       if (error) {
+        // Log detailed error for debugging
+        console.error("Signup error details:", {
+          message: error.message,
+          status: error.status,
+          name: error.name,
+          code: (error as any).code,
+        });
+        
+        // Create user-friendly error message for signup errors
+        const errorCode = error.message?.toLowerCase() || '';
+        const status = error.status;
+        
+        // Handle 401 specifically - usually means email signup is disabled
+        if (status === 401) {
+          error.message = 'Unable to create account. Please ensure email signup is enabled in your Supabase dashboard (Authentication → Providers → Email).';
+        } else if (errorCode.includes('user already registered') || errorCode.includes('already exists')) {
+          error.message = 'An account with this email already exists. Please sign in instead.';
+        } else if (errorCode.includes('invalid email')) {
+          error.message = 'Please enter a valid email address.';
+        } else if (errorCode.includes('password') && errorCode.includes('weak')) {
+          error.message = 'Password is too weak. Please use at least 8 characters with a mix of letters and numbers.';
+        } else if (errorCode.includes('rate limit') || errorCode.includes('too many')) {
+          error.message = 'Too many signup attempts. Please wait a few minutes before trying again.';
+        } else if (errorCode.includes('network') || errorCode.includes('fetch')) {
+          error.message = 'Unable to connect. Please check your internet connection and try again.';
+        } else if (errorCode.includes('signups not allowed') || errorCode.includes('signup disabled')) {
+          error.message = 'New signups are currently disabled. Please contact support.';
+        }
+        
         return { error, needsEmailConfirmation: false }
       }
 
@@ -300,6 +329,45 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }
 
+  // Helper function to get user-friendly error message
+  const getAuthErrorMessage = (error: AuthError): string => {
+    const errorCode = error.message?.toLowerCase() || '';
+    const status = (error as any).status;
+    
+    // Handle 401 Unauthorized - invalid credentials
+    if (status === 401 || errorCode.includes('invalid login credentials') || errorCode.includes('invalid_credentials')) {
+      return 'Invalid email or password. Please check your credentials and try again.';
+    }
+    
+    // Handle specific error messages
+    if (errorCode.includes('email not confirmed')) {
+      return 'Please verify your email address before signing in. Check your inbox for a confirmation link.';
+    }
+    
+    if (errorCode.includes('user not found') || errorCode.includes('no user found')) {
+      return 'No account found with this email. Please sign up first.';
+    }
+    
+    if (errorCode.includes('too many requests') || errorCode.includes('rate limit')) {
+      return 'Too many login attempts. Please wait a few minutes before trying again.';
+    }
+    
+    if (errorCode.includes('network') || errorCode.includes('fetch')) {
+      return 'Unable to connect. Please check your internet connection and try again.';
+    }
+    
+    if (errorCode.includes('invalid email')) {
+      return 'Please enter a valid email address.';
+    }
+    
+    if (errorCode.includes('password')) {
+      return 'Password is incorrect. Please try again or reset your password.';
+    }
+    
+    // Default message
+    return error.message || 'An error occurred during sign in. Please try again.';
+  };
+
   // Sign in with email and password
   const signIn = async (email: string, password: string) => {
     try {
@@ -308,10 +376,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
         password,
       })
 
-      return { error }
+      if (error) {
+        // Update error message in place with user-friendly version
+        error.message = getAuthErrorMessage(error);
+        return { error };
+      }
+
+      return { error: null }
     } catch (error) {
       console.error("Sign in error:", error)
-      return { error: error as AuthError }
+      // For unexpected errors, return a generic auth error
+      return { 
+        error: {
+          message: 'An unexpected error occurred. Please try again.',
+          name: 'AuthError',
+          status: 500,
+        } as unknown as AuthError 
+      }
     }
   }
 
@@ -377,8 +458,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const resetPassword = async (email: string) => {
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/reset-password`,
+        // Use callback route to exchange the token, with type=recovery to indicate password reset
+        redirectTo: `${window.location.origin}/auth/callback?type=recovery`,
       })
+
+      if (error) {
+        // Provide user-friendly error messages
+        const errorCode = error.message?.toLowerCase() || '';
+        
+        if (errorCode.includes('user not found') || errorCode.includes('no user')) {
+          error.message = 'No account found with this email address.';
+        } else if (errorCode.includes('rate limit') || errorCode.includes('too many')) {
+          error.message = 'Too many reset requests. Please wait a few minutes before trying again.';
+        } else if (errorCode.includes('network') || errorCode.includes('fetch')) {
+          error.message = 'Unable to connect. Please check your internet connection.';
+        }
+      }
 
       return { error }
     } catch (error) {
@@ -393,6 +488,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const { error } = await supabase.auth.updateUser({
         password: newPassword,
       })
+
+      if (error) {
+        // Provide user-friendly error messages
+        const errorCode = error.message?.toLowerCase() || '';
+        
+        if (errorCode.includes('weak') || errorCode.includes('password')) {
+          error.message = 'Password is too weak. Please use at least 8 characters with letters and numbers.';
+        } else if (errorCode.includes('same password') || errorCode.includes('different')) {
+          error.message = 'New password must be different from your current password.';
+        } else if (errorCode.includes('session') || errorCode.includes('expired')) {
+          error.message = 'Your session has expired. Please request a new password reset link.';
+        } else if (errorCode.includes('network') || errorCode.includes('fetch')) {
+          error.message = 'Unable to connect. Please check your internet connection.';
+        }
+      }
 
       return { error }
     } catch (error) {

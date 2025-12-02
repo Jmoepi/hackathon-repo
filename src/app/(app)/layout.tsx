@@ -1,6 +1,7 @@
 "use client"
 
 import type { ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   SidebarProvider,
   Sidebar,
@@ -40,9 +41,11 @@ function getInitials(firstName?: string | null, lastName?: string | null, busine
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   const { profile, signOut } = useAuth();
+  const router = useRouter();
 
   const handleSignOut = async () => {
     await signOut();
+    router.push('/login');
   };
 
   return (

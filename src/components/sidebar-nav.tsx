@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Boxes, QrCode, Users, CreditCard, Settings, UserCircle, Sparkles } from 'lucide-react';
+import { LayoutDashboard, Boxes, QrCode, Users, CreditCard, Settings, UserCircle, Sparkles, CalendarDays, ClipboardList, Truck, FileText, BarChart3, ShoppingCart, Crown } from 'lucide-react';
 import {
   SidebarMenu,
   SidebarMenuItem,
@@ -26,6 +26,41 @@ const navItems = [
     gradient: 'from-blue-500 to-indigo-500',
   },
   { 
+    href: '/bookings', 
+    label: 'Bookings', 
+    icon: CalendarDays,
+    gradient: 'from-pink-500 to-rose-500',
+    badge: 'New',
+  },
+  { 
+    href: '/orders', 
+    label: 'Orders', 
+    icon: ClipboardList,
+    gradient: 'from-amber-500 to-orange-500',
+    badge: 'New',
+  },
+  { 
+    href: '/deliveries', 
+    label: 'Deliveries', 
+    icon: Truck,
+    gradient: 'from-cyan-500 to-teal-500',
+    badge: 'New',
+  },
+  { 
+    href: '/invoices', 
+    label: 'Invoices', 
+    icon: FileText,
+    gradient: 'from-violet-500 to-indigo-500',
+    badge: 'New',
+  },
+  { 
+    href: '/cart', 
+    label: 'Cart & Checkout', 
+    icon: ShoppingCart,
+    gradient: 'from-fuchsia-500 to-pink-500',
+    badge: 'New',
+  },
+  { 
     href: '/payments', 
     label: 'Payments', 
     icon: QrCode,
@@ -42,6 +77,12 @@ const navItems = [
     label: 'Airtime & Data', 
     icon: CreditCard,
     gradient: 'from-cyan-500 to-blue-500',
+  },
+  { 
+    href: '/reports', 
+    label: 'Reports', 
+    icon: BarChart3,
+    gradient: 'from-emerald-500 to-green-500',
     badge: 'New',
   },
   { 
@@ -55,6 +96,13 @@ const navItems = [
     label: 'Settings', 
     icon: Settings,
     gradient: 'from-slate-500 to-gray-600',
+  },
+  { 
+    href: '/pricing', 
+    label: 'Upgrade Plan', 
+    icon: Crown,
+    gradient: 'from-amber-500 to-yellow-500',
+    badge: 'Pro',
   },
 ];
 

@@ -1,95 +1,159 @@
+# TradaHub
 
-# local Trader Toolkit
+_TradaHub is your all-in-one business command center in your pocket._
 
-local Trader Toolkit is a modern, mobile-friendly business management app for small businesses and street vendors. Built with Next.js, React, and Tailwind CSS, it provides:
-
-- **Inventory Management**: Track products, update stock, and get low-stock alerts.
-- **Payments**: Generate QR codes for digital payments, with a realistic mock payment provider (pending → webhook → paid) for demos. Easily swap to Paystack/Flutterwave later.
-- **Dashboard**: Visualize sales, revenue, and best-sellers with live charts.
-- **Customer Engagement**: Manage customer lists and send promotional SMS.
-- **Onboarding**: Guided onboarding flow for new users.
-- **Theme & Accessibility**: Dark/light mode, responsive design, and accessible UI.
-
-## Demo Payment Provider
-
-
-The app supports both a local mock payment gateway and real Paystack integration:
-- Generates QR codes for payments.
-- Simulates real payment flow (pending, webhook, paid) with auto-settle or manual simulation.
-- API routes for payment creation, status polling, and webhook simulation.
-- Easily swap to Paystack by changing one env variable.
-- Paystack integration supports real payment flows, webhooks, and callback URLs for production/demo.
-
-## Getting Started
-
-This project uses [pnpm](https://pnpm.io/) for package management. If you don't have pnpm installed, run:
-
-```bash
-npm install -g pnpm
-```
-
-### Common commands
-
-- Install dependencies:
-	```bash
-	pnpm install
-	```
-- Start development server:
-	```bash
-	pnpm dev
-	```
-- Build for production:
-	```bash
-	pnpm build
-	```
-
-## Environment Setup
-
-Add to `.env.local` for demo payments:
-
-```
-PROVIDER_PAYMENTS=MOCK
-PAYMENT_AUTO_SETTLE_SECONDS=8
-```
-
-## Folder Structure
-
-- `src/app/` — Main app pages and API routes
-- `src/components/` — UI components
-- `src/lib/` — Payment provider logic, store, and adapters
-
-## How to Test Payments
-
-
-### Mock Provider (Demo)
-1. Go to the Payments page, enter an amount, and generate a QR code.
-2. The payment will auto-settle after 8 seconds (or use the manual simulator API).
-3. Dashboard updates in real time when payment is received.
-
-### Paystack Provider (Live/Test)
-1. Set `PROVIDER_PAYMENTS=PAYSTACK` in your `.env.local` and add your Paystack API key.
-2. Deploy to Vercel or run locally with ngrok for webhook/callback testing.
-3. In your Paystack dashboard, set:
-	- **Webhook URL:** `https://your-vercel-domain/api/webhooks/paystack`
-	- **Callback URL:** `https://your-vercel-domain/(app)/payments/callback`
-4. Go to the Payments page, enter an amount, and generate a QR code.
-5. Complete the payment using Paystack’s test card or QR flow.
-6. After payment, Paystack will POST to your webhook URL, updating payment status.
-7. You’ll be redirected to the callback page.
-8. Dashboard and recent transactions will update in real time.
-
-## Swapping Providers
-
-
-To use Paystack, set `PROVIDER_PAYMENTS=PAYSTACK` and add your API key in `.env.local`. For mock/demo, use `PROVIDER_PAYMENTS=MOCK`.
+It’s a mobile-friendly business toolkit for **small businesses, township traders, and side hustlers**.  
+Manage products, customers, payments, and insights — all from one simple, powerful app built on **Next.js + Supabase**.
 
 ---
 
+## ✨ Key Features
 
-## Deployment
+### 1. Authentication & Security
 
-Deploy easily to Vercel for public access and webhook/callback support:
-- Vercel domain: `https://your-vercel-domain`
-- No need for ngrok when deployed.
+- **Supabase Auth** with:
+  - Email/password signup + **OTP verification**
+  - **Google OAuth** sign-in
+  - Magic link (email-based) login
+- Authenticated routing:
+  - All routes under `/(app)/*` are protected
+  - Middleware ensures only logged-in users can access app pages
+- First-time login flow:
+  - User signs up → verifies OTP → profile created → redirected to `/onboarding` or `/dashboard`
 
-For more details, see the code in `src/app/`, `src/lib/payments/`, and `src/lib/store.ts`.
+**Key Files:**
+
+- `src/context/AuthContext.tsx` – Central auth context (login, signup, logout, session)
+- `src/app/login/page.tsx` – Login page
+- `src/app/signup/page.tsx` – Signup page
+- `src/app/verify-otp/page.tsx` – OTP verification
+- `src/app/auth/callback/route.ts` – OAuth callback route
+- `src/middleware.ts` – Route protection
+
+---
+
+### 2. User Profile (My Business)
+
+Give each user a proper **business identity** inside the app.
+
+- View & edit:
+  - Full name, email, phone number
+  - Business name, business type, location
+  - ID number, date of birth (optional)
+- Avatar upload with initials fallback
+- Future-friendly: plug in transaction history & stats on this page
+
+**Profile Schema (`profiles`):**
+
+| Field          | Type      | Description                        |
+|----------------|-----------|------------------------------------|
+| `id`           | UUID      | Primary key (from `auth.users`)    |
+| `email`        | text      | User email                         |
+| `full_name`    | text      | Display name                       |
+| `phone`        | text      | Phone number                       |
+| `business_name`| text      | Business/shop name                 |
+| `business_type`| text      | Type of business                   |
+| `location`     | text      | Business location                  |
+| `id_number`    | text      | National ID number                 |
+| `date_of_birth`| date      | Date of birth                      |
+| `avatar_url`   | text      | Profile image path                 |
+| `created_at`   | timestamptz | Created timestamp                |
+| `updated_at`   | timestamptz | Last updated timestamp           |
+
+**Key Files:**
+
+- `src/app/(app)/profile/page.tsx`
+- `src/lib/supabase/services/profiles.ts`
+
+---
+
+### 3. Settings
+
+Let users control how TradaHub behaves for **their** business.
+
+- Notification preferences:
+  - `notifications_push` (push)
+  - `notifications_email` (email)
+- Receipt preferences:
+  - Show/hide business name, address, phone
+- Payment preferences:
+  - Default payment method (e.g. `cash`)
+  - Allow / disallow partial payments
+- UI theme:
+  - `light` / `dark` / `system`
+- **Auto-save on change** – no manual "Save" button required
+
+**Settings Schema (`settings`):**
+
+| Field                         | Type      | Default    |
+|------------------------------|-----------|------------|
+| `id`                         | UUID      | generated  |
+| `user_id`                    | UUID      | references `auth.users` |
+| `notifications_push`         | boolean   | `true`     |
+| `notifications_email`        | boolean   | `true`     |
+| `receipt_show_business_name` | boolean   | `true`     |
+| `receipt_show_address`       | boolean   | `true`     |
+| `receipt_show_phone`         | boolean   | `true`     |
+| `payment_default_method`     | text      | `'cash'`   |
+| `payment_enable_partial`     | boolean   | `false`    |
+| `theme`                      | text      | `'system'` |
+| `created_at`                 | timestamptz | `now()`  |
+| `updated_at`                 | timestamptz | `now()`  |
+
+**Key Files:**
+
+- `src/app/(app)/settings/page.tsx`
+- `src/lib/supabase/services/settings.ts`
+
+---
+
+### 4. Dashboard
+
+A clean daily **snapshot** of the business.
+
+- Business metrics overview
+- Sales chart visualisation (e.g. last 7 / 30 days)
+- Recent transactions (hooked to your future transactions table)
+- Low stock alerts (integrated with inventory)
+- Profile completion banner:
+  - Shows missing fields and progress to encourage profile completion
+
+**Key Files:**
+
+- `src/app/(app)/dashboard/page.tsx`
+- `src/app/(app)/dashboard/components/sales-chart.tsx`
+- `src/components/profile-completion-banner.tsx`
+
+---
+
+### 5. Storage (Avatars & Products)
+
+Using **Supabase Storage** for media:
+
+#### Buckets
+
+- **`avatars`**  
+  - Public: **Yes**  
+  - Max size: 5MB  
+  - Types: JPEG, PNG, GIF, WebP  
+  - Path: `{user_id}/{filename}`  
+- **`products`**  
+  - Public: **Yes**  
+  - Max size: 10MB  
+  - Types: JPEG, PNG, GIF, WebP  
+  - Path: `{user_id}/{filename}`  
+
+#### Storage Service
+
+```ts
+// Upload avatar
+uploadAvatar(userId: string, file: File): Promise<string | null>
+
+// Delete avatar
+deleteAvatar(userId: string, fileName: string): Promise<boolean>
+
+// Get avatar URL
+getAvatarUrl(path: string): string
+
+// Upload product image
+uploadProductImage(userId: string, file: File): Promise<string | null>

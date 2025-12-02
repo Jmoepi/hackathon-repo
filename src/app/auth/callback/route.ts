@@ -7,10 +7,17 @@ export async function GET(request: NextRequest) {
   const next = searchParams.get("next") ?? "/dashboard"
   const errorParam = searchParams.get("error")
   const errorDescription = searchParams.get("error_description")
+  const type = searchParams.get("type") // 'recovery' for password reset, 'signup' for email confirmation
 
   // Handle OAuth errors
   if (errorParam) {
     console.error("OAuth error:", errorParam, errorDescription)
+    // For password reset errors, redirect to forgot-password page
+    if (type === "recovery") {
+      return NextResponse.redirect(
+        `${origin}/auth/reset-password?error=${encodeURIComponent(errorParam)}&error_description=${encodeURIComponent(errorDescription || "")}`
+      )
+    }
     return NextResponse.redirect(
       `${origin}/login?error=auth_callback_error&message=${encodeURIComponent(errorDescription || errorParam)}`
     )
@@ -19,9 +26,15 @@ export async function GET(request: NextRequest) {
   if (code) {
     try {
       const supabase = await createClient()
-      const { error } = await supabase.auth.exchangeCodeForSession(code)
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code)
       
-      if (!error) {
+      if (!error && data.session) {
+        // Check if this is a password recovery flow
+        if (type === "recovery") {
+          // Redirect to reset password page - user is now authenticated and can change password
+          return NextResponse.redirect(`${origin}/auth/reset-password`)
+        }
+
         // Get the user after successful session exchange
         const { data: { user } } = await supabase.auth.getUser()
         
@@ -67,7 +80,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.redirect(`${origin}${safeRedirect}`)
       }
 
-      console.error("Session exchange error:", error.message)
+      console.error("Session exchange error:", error?.message || "Unknown error")
     } catch (err) {
       console.error("Auth callback error:", err)
     }

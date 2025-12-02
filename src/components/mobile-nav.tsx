@@ -1,9 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { LayoutDashboard, Boxes, QrCode, Users, Settings } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
+import { LayoutDashboard, Boxes, QrCode, Users, MoreHorizontal, Settings, LogOut, User, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const navItems = [
     { 
@@ -30,16 +39,20 @@ const navItems = [
         icon: Users,
         gradient: "from-orange-500 to-amber-500",
     },
-    { 
-        href: "/settings", 
-        label: "Settings", 
-        icon: Settings,
-        gradient: "from-slate-500 to-gray-600",
-    },
 ];
 
 export function MobileNav() {
     const pathname = usePathname();
+    const router = useRouter();
+    const { signOut } = useAuth();
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+    const handleSignOut = async () => {
+        await signOut();
+        router.push('/login');
+    };
+
+    const isMoreActive = ["/settings", "/profile", "/reports"].includes(pathname);
 
     return (
         <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
@@ -81,6 +94,60 @@ export function MobileNav() {
                         </Link>
                     );
                 })}
+                
+                {/* More menu with dropdown */}
+                <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+                    <DropdownMenuTrigger asChild>
+                        <button
+                            className={cn(
+                                "flex flex-col items-center justify-center flex-1 h-full py-2 transition-all duration-200",
+                                isMoreActive ? "text-primary" : "text-muted-foreground"
+                            )}
+                        >
+                            <div
+                                className={cn(
+                                    "flex items-center justify-center w-10 h-10 rounded-2xl transition-all duration-300",
+                                    isMoreActive 
+                                        ? "bg-gradient-to-br from-slate-500 to-gray-600 text-white shadow-lg scale-110" 
+                                        : "text-muted-foreground hover:bg-muted"
+                                )}
+                            >
+                                <MoreHorizontal className={cn("h-5 w-5", isMoreActive && "drop-shadow-sm")} />
+                            </div>
+                            <span className={cn(
+                                "text-[10px] font-medium mt-1 transition-all duration-200",
+                                isMoreActive ? "text-foreground font-semibold" : "text-muted-foreground"
+                            )}>
+                                More
+                            </span>
+                            {isMoreActive && (
+                                <div className="absolute bottom-1 w-1 h-1 rounded-full bg-primary" />
+                            )}
+                        </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48 mb-2">
+                        <DropdownMenuItem onClick={() => router.push('/profile')}>
+                            <User className="h-4 w-4 mr-2" />
+                            Profile
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => router.push('/settings')}>
+                            <Settings className="h-4 w-4 mr-2" />
+                            Settings
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => router.push('/reports')}>
+                            <FileText className="h-4 w-4 mr-2" />
+                            Reports
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem 
+                            onClick={handleSignOut}
+                            className="text-red-500 focus:text-red-500 focus:bg-red-500/10"
+                        >
+                            <LogOut className="h-4 w-4 mr-2" />
+                            Sign Out
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </div>
         </div>
     );

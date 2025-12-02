@@ -202,57 +202,84 @@ export default function SignupPage() {
     // Build full address
     const fullAddress = `${formData.streetAddress}, ${formData.city}, ${formData.province} ${formData.postalCode}`;
     
-    // Sign up with Supabase
-    const { error, needsEmailConfirmation } = await signUp(formData.email, formData.password, {
-      first_name: formData.firstName,
-      last_name: formData.lastName,
-      phone: formData.phone,
-      business_name: formData.businessName,
-      business_type: formData.businessType,
-      business_address: fullAddress,
-      vat_number: formData.showVAT ? formData.vatNumber : undefined,
-      receipt_header: formData.receiptHeader || formData.businessName,
-      receipt_footer: formData.receiptFooter,
-    });
-    
-    if (error) {
+    try {
+      // Sign up with Supabase
+      const { error, needsEmailConfirmation } = await signUp(formData.email, formData.password, {
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        phone: formData.phone,
+        business_name: formData.businessName,
+        business_type: formData.businessType,
+        business_address: fullAddress,
+        vat_number: formData.showVAT ? formData.vatNumber : undefined,
+        receipt_header: formData.receiptHeader || formData.businessName,
+        receipt_footer: formData.receiptFooter,
+      });
+      
+      if (error) {
+        // Determine appropriate title based on error
+        const errorMessage = error.message || '';
+        let title = "Signup Failed";
+        
+        if (errorMessage.includes('already exists')) {
+          title = "Account Exists";
+        } else if (errorMessage.includes('invalid email')) {
+          title = "Invalid Email";
+        } else if (errorMessage.includes('Password')) {
+          title = "Weak Password";
+        } else if (errorMessage.includes('Too many')) {
+          title = "Too Many Attempts";
+        } else if (errorMessage.includes('Unable to connect')) {
+          title = "Connection Error";
+        }
+        
+        toast({
+          variant: "destructive",
+          title,
+          description: errorMessage || "Could not create your account. Please try again.",
+        });
+        setIsLoading(false);
+        return;
+      }
+      
+      // Save additional data to localStorage as backup (for onboarding completion)
+      const userData = {
+        ...formData,
+        password: undefined,
+        confirmPassword: undefined,
+        createdAt: new Date().toISOString(),
+      };
+      localStorage.setItem("tradahub-profile", JSON.stringify(userData));
+      
+      if (needsEmailConfirmation) {
+        // Email confirmation required - redirect to OTP verification page
+        toast({
+          title: "📧 Verification Code Sent!",
+          description: `Enter the 6-digit code sent to ${formData.email}`,
+        });
+        router.push(`/verify-otp?email=${encodeURIComponent(formData.email)}`);
+        setIsLoading(false);
+        return;
+      }
+      
+      // If no email confirmation needed (e.g., email auth disabled), go to dashboard
+      toast({
+        title: "🎉 Account Created!",
+        description: "Welcome to TradaHub!",
+      });
+      
+      router.push("/dashboard");
+    } catch (err) {
+      // Handle unexpected errors gracefully
+      console.error("Unexpected signup error:", err);
       toast({
         variant: "destructive",
-        title: "Signup Failed",
-        description: error.message || "Could not create your account. Please try again.",
+        title: "Something went wrong",
+        description: "We couldn't create your account. Please try again later.",
       });
+    } finally {
       setIsLoading(false);
-      return;
     }
-    
-    // Save additional data to localStorage as backup (for onboarding completion)
-    const userData = {
-      ...formData,
-      password: undefined,
-      confirmPassword: undefined,
-      createdAt: new Date().toISOString(),
-    };
-    localStorage.setItem("tradahub-profile", JSON.stringify(userData));
-    
-    if (needsEmailConfirmation) {
-      // Email confirmation required - redirect to OTP verification page
-      toast({
-        title: "📧 Verification Code Sent!",
-        description: `Enter the 6-digit code sent to ${formData.email}`,
-      });
-      router.push(`/verify-otp?email=${encodeURIComponent(formData.email)}`);
-      setIsLoading(false);
-      return;
-    }
-    
-    // If no email confirmation needed (e.g., email auth disabled), go to dashboard
-    toast({
-      title: "🎉 Account Created!",
-      description: "Welcome to TradaHub!",
-    });
-    
-    router.push("/dashboard");
-    setIsLoading(false);
   };
 
   // Show loading state while checking auth
@@ -790,6 +817,9 @@ export default function SignupPage() {
                 Sign in
               </Link>
             </p>
+            <Link href="/pricing" className="text-sm text-slate-500 hover:text-slate-300">
+              View pricing plans →
+            </Link>
           </CardFooter>
         </Card>
       </div>
