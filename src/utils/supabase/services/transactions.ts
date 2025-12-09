@@ -1,9 +1,8 @@
-import { createClient } from "@/lib/supabase/client"
+import { createSupabaseBrowserClient } from "@/lib/supabase/browser-client"
 import type { Transaction, TransactionInsert, TransactionUpdate } from "@/lib/supabase/types"
 
 // Get Supabase client
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const getClient = () => createClient() as any
+const getClient = () => createSupabaseBrowserClient()
 
 // Fetch all transactions for a user
 export async function getTransactions(userId: string): Promise<Transaction[]> {
@@ -227,7 +226,7 @@ export async function getTotalSales(
     throw error
   }
 
-  return (data || []).reduce((sum: number, t: { amount?: number }) => sum + (t.amount || 0), 0)
+  return (data || []).reduce((sum, t) => sum + (t.amount || 0), 0)
 }
 
 // Get transaction count for a period

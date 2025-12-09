@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Boxes, QrCode, Users, CreditCard, Settings, UserCircle, Sparkles, CalendarDays, ClipboardList, Truck, FileText, BarChart3, ShoppingCart, Crown } from 'lucide-react';
+import { LayoutDashboard, Boxes, QrCode, Users, CreditCard, Settings, UserCircle, Sparkles, CalendarDays, ClipboardList, Truck, FileText, BarChart3, ShoppingCart, Crown, Lock } from 'lucide-react';
 import {
   SidebarMenu,
   SidebarMenuItem,
@@ -11,19 +11,50 @@ import {
   SidebarContext,
 } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
+import { useSubscription } from '@/context/SubscriptionContext';
+import type { ServiceId } from '@/lib/services/catalog';
 
-const navItems = [
+// Map routes to service IDs
+const routeToServiceMap: Record<string, ServiceId> = {
+  '/dashboard': 'dashboard',
+  '/inventory': 'inventory',
+  '/bookings': 'bookings',
+  '/orders': 'orders',
+  '/deliveries': 'deliveries',
+  '/invoices': 'invoices',
+  '/cart': 'cart',
+  '/payments': 'payments',
+  '/customers': 'customers',
+  '/airtime-data': 'airtime',
+  '/reports': 'reports',
+};
+
+// Routes that don't require service subscription
+const freeRoutes = ['/profile', '/settings', '/pricing'];
+
+interface NavItem {
+  href: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  gradient: string;
+  badge?: string;
+  serviceId?: ServiceId;
+}
+
+const navItems: NavItem[] = [
   { 
     href: '/dashboard', 
     label: 'Dashboard', 
     icon: LayoutDashboard,
     gradient: 'from-emerald-500 to-teal-500',
+    serviceId: 'dashboard',
   },
   { 
     href: '/inventory', 
     label: 'Inventory', 
     icon: Boxes,
     gradient: 'from-blue-500 to-indigo-500',
+    serviceId: 'inventory',
   },
   { 
     href: '/bookings', 
@@ -31,6 +62,7 @@ const navItems = [
     icon: CalendarDays,
     gradient: 'from-pink-500 to-rose-500',
     badge: 'New',
+    serviceId: 'bookings',
   },
   { 
     href: '/orders', 
@@ -38,6 +70,7 @@ const navItems = [
     icon: ClipboardList,
     gradient: 'from-amber-500 to-orange-500',
     badge: 'New',
+    serviceId: 'orders',
   },
   { 
     href: '/deliveries', 
@@ -45,6 +78,7 @@ const navItems = [
     icon: Truck,
     gradient: 'from-cyan-500 to-teal-500',
     badge: 'New',
+    serviceId: 'deliveries',
   },
   { 
     href: '/invoices', 
@@ -52,6 +86,7 @@ const navItems = [
     icon: FileText,
     gradient: 'from-violet-500 to-indigo-500',
     badge: 'New',
+    serviceId: 'invoices',
   },
   { 
     href: '/cart', 
@@ -59,24 +94,28 @@ const navItems = [
     icon: ShoppingCart,
     gradient: 'from-fuchsia-500 to-pink-500',
     badge: 'New',
+    serviceId: 'cart',
   },
   { 
     href: '/payments', 
     label: 'Payments', 
     icon: QrCode,
     gradient: 'from-purple-500 to-pink-500',
+    serviceId: 'payments',
   },
   { 
     href: '/customers', 
     label: 'Customers', 
     icon: Users,
     gradient: 'from-orange-500 to-amber-500',
+    serviceId: 'customers',
   },
   { 
     href: '/airtime-data', 
     label: 'Airtime & Data', 
     icon: CreditCard,
     gradient: 'from-cyan-500 to-blue-500',
+    serviceId: 'airtime',
   },
   { 
     href: '/reports', 
@@ -84,6 +123,7 @@ const navItems = [
     icon: BarChart3,
     gradient: 'from-emerald-500 to-green-500',
     badge: 'New',
+    serviceId: 'reports',
   },
   { 
     href: '/profile', 
@@ -108,6 +148,7 @@ const navItems = [
 
 export default function SidebarNav() {
   const pathname = usePathname();
+  const { hasService, activeServices, isLoading } = useSubscription();
 
   // Access sidebar context to close on navigation
   const sidebarCtx = React.useContext(SidebarContext);
@@ -117,9 +158,21 @@ export default function SidebarNav() {
     }
   };
 
+  // Filter nav items based on user's subscription
+  const visibleNavItems = navItems.filter((item) => {
+    // Free routes are always visible
+    if (freeRoutes.includes(item.href)) return true;
+    
+    // If no service ID required, show it
+    if (!item.serviceId) return true;
+    
+    // Check if user has access to this service
+    return hasService(item.serviceId);
+  });
+
   return (
     <SidebarMenu className="space-y-1">
-      {navItems.map((item) => {
+      {visibleNavItems.map((item) => {
         const isActive = pathname === item.href;
         return (
           <SidebarMenuItem key={item.href}>

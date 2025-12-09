@@ -87,7 +87,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [session, setSession] = useState<Session | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  const supabase = createClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const supabase = createClient() as any
 
   // Fetch user profile from database
   const fetchProfile = useCallback(async (userId: string) => {
@@ -142,7 +143,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, currentSession) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      async (event: any, currentSession: any) => {
         setSession(currentSession)
         setUser(currentSession?.user ?? null)
 

@@ -1,14 +1,11 @@
-import { createClient } from '../client';
+import { createSupabaseBrowserClient } from '../browser-client';
 import type { Settings, SettingsInsert, SettingsUpdate } from '../types';
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const getSupabase = () => createClient() as any;
 
 /**
  * Get user settings
  */
 export async function getSettings(userId: string): Promise<Settings | null> {
-  const supabase = getSupabase();
+  const supabase = createSupabaseBrowserClient();
 
   const { data, error } = await supabase
     .from('settings')
@@ -32,7 +29,7 @@ export async function getSettings(userId: string): Promise<Settings | null> {
  * Create default settings for a new user
  */
 export async function createDefaultSettings(userId: string): Promise<Settings | null> {
-  const supabase = getSupabase();
+  const supabase = createSupabaseBrowserClient();
 
   const defaultSettings: SettingsInsert = {
     user_id: userId,
@@ -73,8 +70,8 @@ export async function createDefaultSettings(userId: string): Promise<Settings | 
 export async function updateSettings(
   userId: string,
   updates: SettingsUpdate
-): Promise<{ error: Error | null }> {
-  const supabase = getSupabase();
+): Promise<Settings | null> {
+  const supabase = createSupabaseBrowserClient();
 
   // First check if settings exist
   const existingSettings = await getSettings(userId);

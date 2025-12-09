@@ -175,17 +175,21 @@ The pricing page is accessible from:
 
 ## Future Integration
 
-### Supabase Schema (Planned)
+### Supabase Schema (Implemented)
+
+The database schema is now implemented in `supabase/migrations/002_services_and_features.sql`.
+
+See [Backend Services Documentation](./backend-services.md) for full CRUD operations and usage.
 
 ```sql
 -- User subscriptions
-CREATE TABLE user_subscriptions (
+CREATE TABLE subscriptions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES auth.users(id),
   plan_type VARCHAR(20) NOT NULL, -- 'starter', 'growth', 'pro', 'custom'
   bundle_id VARCHAR(50),
   monthly_price INTEGER NOT NULL,
-  status VARCHAR(20) DEFAULT 'active',
+  status subscription_status DEFAULT 'active',
   started_at TIMESTAMPTZ DEFAULT NOW(),
   expires_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW()
@@ -194,10 +198,27 @@ CREATE TABLE user_subscriptions (
 -- Services in custom plans
 CREATE TABLE subscription_services (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  subscription_id UUID REFERENCES user_subscriptions(id),
+  subscription_id UUID REFERENCES subscriptions(id),
   service_id VARCHAR(50) NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
+```
+
+### Service Functions
+
+```typescript
+import { 
+  getSubscription, 
+  getUserActiveServices,
+  checkUserHasService 
+} from '@/lib/supabase/services';
+
+// Get user's active services for feature gating
+const services = await getUserActiveServices(userId);
+// Returns: ['dashboard', 'inventory', 'customers', 'payments']
+
+// Check if user has access to a specific service
+const hasBookings = await checkUserHasService(userId, 'bookings');
 ```
 
 ### Redirect Implementation

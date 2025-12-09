@@ -70,4 +70,4 @@ export type {
   InvoiceUpdate,
   InvoiceItem,
   InvoiceItemInsert,
-} from "../types"
+} from "@/lib/supabase/types"

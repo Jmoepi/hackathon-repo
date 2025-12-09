@@ -62,6 +62,32 @@ Users can select individual services (R49-R99/mo each) with a 10% discount when 
 
 See [Services & Pricing Documentation](./services-and-pricing.md) for details.
 
+## Backend Architecture
+
+TradaHub uses Supabase for the backend with a modular service layer.
+
+### Database Tables
+
+| Feature | Tables |
+|---------|--------|
+| Subscriptions | `subscriptions`, `subscription_services` |
+| Bookings | `staff_members`, `booking_services`, `bookings` |
+| Orders | `menu_items`, `orders`, `order_items` |
+| Deliveries | `drivers`, `deliveries`, `delivery_status_history` |
+| Invoices | `invoices`, `invoice_items` |
+
+### Service Layer
+
+Each feature has a dedicated service file in `src/lib/supabase/services/`:
+
+- **subscriptions.ts** - Plan management, feature gating
+- **bookings.ts** - Appointments, staff, calendar
+- **orders.ts** - Menu items, order workflow
+- **deliveries.ts** - Driver management, tracking
+- **invoices.ts** - Billing, payments, tax calculations
+
+See [Backend Services Documentation](./backend-services.md) for API reference.
+
 ## Style Guidelines
 
 - **Primary color**: Emerald green (#10B981) representing growth and prosperity

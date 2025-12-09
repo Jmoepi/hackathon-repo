@@ -1,9 +1,8 @@
-import { createClient } from "@/lib/supabase/client"
+import { createSupabaseBrowserClient } from "@/lib/supabase/browser-client"
 import type { Notification, NotificationInsert } from "@/lib/supabase/types"
 
 // Get Supabase client
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const getClient = () => createClient() as any
+const getClient = () => createSupabaseBrowserClient()
 
 // Fetch all notifications for a user
 export async function getNotifications(userId: string): Promise<Notification[]> {

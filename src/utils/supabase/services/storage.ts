@@ -1,13 +1,10 @@
-import { createClient } from '../client';
+import { createSupabaseBrowserClient } from '../browser-client';
 
 // Storage bucket names
 export const BUCKETS = {
   AVATARS: 'avatars',
   PRODUCTS: 'products',
 } as const;
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const getSupabase = () => createClient() as any;
 
 /**
  * Upload a user's avatar image
@@ -19,7 +16,7 @@ export async function uploadAvatar(
   userId: string,
   file: File
 ): Promise<{ url: string | null; error: Error | null }> {
-  const supabase = getSupabase();
+  const supabase = createSupabaseBrowserClient();
 
   // Get file extension
   const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
@@ -65,7 +62,7 @@ export async function uploadAvatar(
  * @param userId - The user's ID
  */
 export async function deleteAvatar(userId: string): Promise<{ error: Error | null }> {
-  const supabase = getSupabase();
+  const supabase = createSupabaseBrowserClient();
 
   // List all files in the user's avatar folder
   const { data: files, error: listError } = await supabase.storage
@@ -79,7 +76,7 @@ export async function deleteAvatar(userId: string): Promise<{ error: Error | nul
 
   // Delete all files in the folder
   if (files && files.length > 0) {
-    const filePaths = files.map((f: { name: string }) => `${userId}/${f.name}`);
+    const filePaths = files.map((f) => `${userId}/${f.name}`);
     const { error: deleteError } = await supabase.storage
       .from(BUCKETS.AVATARS)
       .remove(filePaths);
@@ -104,7 +101,7 @@ export async function deleteAvatar(userId: string): Promise<{ error: Error | nul
  * @param userId - The user's ID
  */
 export async function getAvatarUrl(userId: string): Promise<string | null> {
-  const supabase = getSupabase();
+  const supabase = createSupabaseBrowserClient();
 
   // First check if there's an avatar_url in the profile
   const { data: profile } = await supabase
@@ -144,7 +141,7 @@ export async function uploadProductImage(
   productId: string,
   file: File
 ): Promise<{ url: string | null; error: Error | null }> {
-  const supabase = getSupabase();
+  const supabase = createSupabaseBrowserClient();
 
   // Get file extension
   const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
@@ -180,7 +177,7 @@ export async function deleteProductImage(
   userId: string,
   productId: string
 ): Promise<{ error: Error | null }> {
-  const supabase = getSupabase();
+  const supabase = createSupabaseBrowserClient();
 
   // List files matching the product ID
   const { data: files } = await supabase.storage
@@ -188,9 +185,9 @@ export async function deleteProductImage(
     .list(userId);
 
   if (files) {
-    const productFiles = files.filter((f: { name: string }) => f.name.startsWith(productId));
+    const productFiles = files.filter((f) => f.name.startsWith(productId));
     if (productFiles.length > 0) {
-      const filePaths = productFiles.map((f: { name: string }) => `${userId}/${f.name}`);
+      const filePaths = productFiles.map((f) => `${userId}/${f.name}`);
       const { error } = await supabase.storage
         .from(BUCKETS.PRODUCTS)
         .remove(filePaths);
@@ -213,14 +210,14 @@ export async function getProductImageUrl(
   userId: string,
   productId: string
 ): Promise<string | null> {
-  const supabase = getSupabase();
+  const supabase = createSupabaseBrowserClient();
 
   const { data: files } = await supabase.storage
     .from(BUCKETS.PRODUCTS)
     .list(userId);
 
   if (files) {
-    const productFile = files.find((f: { name: string }) => f.name.startsWith(productId));
+    const productFile = files.find((f) => f.name.startsWith(productId));
     if (productFile) {
       const { data } = supabase.storage
         .from(BUCKETS.PRODUCTS)

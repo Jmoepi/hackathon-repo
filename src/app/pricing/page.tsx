@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   SERVICES,
   BUNDLES,
@@ -12,11 +13,14 @@ import {
   calculateBundleSavings,
   formatPrice,
   generateCustomPlanParams,
+  getBundleById,
   type ServiceId,
   type ServiceDefinition,
   type BundleDefinition,
   type ServiceCategory,
 } from "@/lib/services/catalog";
+import { useSubscription } from "@/context/SubscriptionContext";
+import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -396,14 +400,58 @@ function PricingSummary({
 export default function PricingPage() {
   const [selectedBundle, setSelectedBundle] = useState<string | null>(null);
   const [selectedServices, setSelectedServices] = useState<ServiceId[]>([]);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const { setDemoServices, activeServices, initializeSubscription, isDemoMode } = useSubscription();
+  const { toast } = useToast();
+  const router = useRouter();
 
   const servicesByCategory = getServicesGroupedByCategory();
   const categoryOrder: ServiceCategory[] = ["core", "sales_and_customers", "operations", "advanced"];
 
-  const handleBundleSelect = (bundleId: string) => {
+  // Check if Paystack is configured
+  const isPaystackConfigured = !!process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY;
+
+  const handleBundleSelect = async (bundleId: string) => {
     setSelectedBundle(bundleId);
-    // TODO: Navigate to signup or save selection
-    // router.push(`/signup?plan=${bundleId}`);
+    setIsProcessing(true);
+    
+    // Get bundle services
+    const bundle = getBundleById(bundleId);
+    if (!bundle) {
+      toast({
+        title: "Error",
+        description: "Invalid plan selected",
+        variant: "destructive",
+      });
+      setIsProcessing(false);
+      return;
+    }
+
+    // Try real payment if Paystack is configured
+    if (isPaystackConfigured) {
+      const result = await initializeSubscription('bundle', bundleId);
+      
+      if (result.success && result.authorizationUrl) {
+        // Redirect to Paystack payment page
+        window.location.href = result.authorizationUrl;
+        return;
+      } else if (result.error) {
+        console.error('Payment initialization failed:', result.error);
+        // Fall back to demo mode
+      }
+    }
+
+    // Demo mode fallback
+    setDemoServices(bundle.services);
+    toast({
+      title: `${bundle.name} Plan Activated!`,
+      description: `You now have access to ${bundle.services.length} services. (Demo Mode)`,
+    });
+    
+    setIsProcessing(false);
+    setTimeout(() => {
+      router.push('/dashboard');
+    }, 1500);
   };
 
   const handleServiceToggle = (serviceId: ServiceId) => {
@@ -414,10 +462,43 @@ export default function PricingPage() {
     );
   };
 
-  const handleCustomPlanContinue = () => {
-    const params = generateCustomPlanParams(selectedServices);
-    // TODO: Navigate to signup or save selection
-    // router.push(`/signup?${params}`);
+  const handleCustomPlanContinue = async () => {
+    if (selectedServices.length === 0) {
+      toast({
+        title: "No services selected",
+        description: "Please select at least one service to continue.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsProcessing(true);
+
+    // Try real payment if Paystack is configured
+    if (isPaystackConfigured) {
+      const result = await initializeSubscription('custom', undefined, selectedServices);
+      
+      if (result.success && result.authorizationUrl) {
+        // Redirect to Paystack payment page
+        window.location.href = result.authorizationUrl;
+        return;
+      } else if (result.error) {
+        console.error('Payment initialization failed:', result.error);
+        // Fall back to demo mode
+      }
+    }
+
+    // Demo mode fallback
+    setDemoServices(selectedServices);
+    toast({
+      title: "Custom Plan Activated!",
+      description: `You now have access to ${selectedServices.length} services. (Demo Mode)`,
+    });
+    
+    setIsProcessing(false);
+    setTimeout(() => {
+      router.push('/dashboard');
+    }, 1500);
   };
 
   return (
