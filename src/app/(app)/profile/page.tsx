@@ -57,6 +57,19 @@ export default function ProfilePage() {
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
+  // Business types (must match signup page)
+  const businessTypes = [
+    "Spaza Shop",
+    "Tuck Shop",
+    "General Dealer",
+    "Street Vendor",
+    "Mobile Vendor",
+    "Hair Salon",
+    "Tavern/Shebeen",
+    "Food Vendor",
+    "Other",
+  ];
+
   // Local form state
   const [formData, setFormData] = useState({
     first_name: "",
@@ -67,6 +80,7 @@ export default function ProfilePage() {
     date_of_birth: "",
     business_name: "",
     business_type: "Spaza Shop",
+    business_description: "",
     business_address: "",
     business_city: "",
     business_province: "Gauteng",
@@ -77,28 +91,66 @@ export default function ProfilePage() {
     receipt_footer: "Thank you for shopping with us!",
   });
 
-  // Load profile data when available
+  // Load profile data when available, with fallback to registration data from localStorage
   useEffect(() => {
-    if (profile) {
-      setFormData({
-        first_name: profile.first_name || "",
-        last_name: profile.last_name || "",
-        email: user?.email || profile.email || "",
-        phone: profile.phone || "",
-        id_number: profile.id_number || "",
-        date_of_birth: profile.date_of_birth || "",
-        business_name: profile.business_name || "",
-        business_type: profile.business_type || "Spaza Shop",
-        business_address: profile.business_address || "",
-        business_city: profile.business_city || "",
-        business_province: profile.business_province || "Gauteng",
-        business_postal_code: profile.business_postal_code || "",
-        business_phone: profile.business_phone || "",
-        vat_number: profile.vat_number || "",
-        receipt_header: profile.receipt_header || profile.business_name || "",
-        receipt_footer: profile.receipt_footer || "Thank you for shopping with us!",
-      });
+    // Try to get registration data from localStorage (saved during signup)
+    let registrationData: Record<string, string | boolean> | null = null;
+    try {
+      const savedProfile = localStorage.getItem("tradahub-profile");
+      if (savedProfile) {
+        registrationData = JSON.parse(savedProfile);
+      }
+    } catch (e) {
+      console.warn("Could not parse registration data from localStorage:", e);
     }
+
+    // Helper to get value with fallback chain: profile -> registration -> default
+    const getValue = (
+      profileKey: string, 
+      regKey?: string, 
+      defaultValue: string = ""
+    ): string => {
+      // First check profile (from Supabase)
+      if (profile && profile[profileKey as keyof typeof profile]) {
+        return String(profile[profileKey as keyof typeof profile]);
+      }
+      // Then check registration data (from localStorage)
+      if (registrationData && regKey && registrationData[regKey]) {
+        return String(registrationData[regKey]);
+      }
+      // Finally return default
+      return defaultValue;
+    };
+
+    // Parse address from registration if available
+    let regStreet = "", regCity = "", regProvince = "Gauteng", regPostalCode = "";
+    if (registrationData) {
+      // Registration stores individual address fields
+      regStreet = String(registrationData.streetAddress || "");
+      regCity = String(registrationData.city || "");
+      regProvince = String(registrationData.province || "Gauteng");
+      regPostalCode = String(registrationData.postalCode || "");
+    }
+
+    setFormData({
+      first_name: getValue("first_name", "firstName"),
+      last_name: getValue("last_name", "lastName"),
+      email: user?.email || getValue("email", "email"),
+      phone: getValue("phone", "phone"),
+      id_number: getValue("id_number", "idNumber"),
+      date_of_birth: getValue("date_of_birth", "dateOfBirth"),
+      business_name: getValue("business_name", "businessName"),
+      business_type: getValue("business_type", "businessType", "Spaza Shop"),
+      business_description: getValue("business_description", "businessDescription"),
+      business_address: profile?.business_address || regStreet || "",
+      business_city: profile?.business_city || regCity || "",
+      business_province: profile?.business_province || regProvince || "Gauteng",
+      business_postal_code: profile?.business_postal_code || regPostalCode || "",
+      business_phone: getValue("business_phone", "businessPhone"),
+      vat_number: getValue("vat_number", "vatNumber"),
+      receipt_header: getValue("receipt_header", "receiptHeader") || getValue("business_name", "businessName"),
+      receipt_footer: getValue("receipt_footer", "receiptFooter", "Thank you for shopping with us!"),
+    });
   }, [profile, user]);
 
   const handleSaveProfile = async () => {
@@ -534,11 +586,11 @@ export default function ProfilePage() {
                   disabled={!isEditing}
                   className="w-full rounded-lg border bg-background p-2.5 disabled:opacity-50"
                 >
-                  <option value="Spaza Shop">Spaza Shop</option>
-                  <option value="Tuck Shop">Tuck Shop</option>
-                  <option value="General Dealer">General Dealer</option>
-                  <option value="Street Vendor">Street Vendor</option>
-                  <option value="Mobile Vendor">Mobile Vendor</option>
+                  {businessTypes.map((type) => (
+                    <option key={type} value={type}>
+                      {type}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div className="space-y-2">
@@ -550,6 +602,17 @@ export default function ProfilePage() {
                   disabled={!isEditing}
                 />
               </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="business_description">Business Description</Label>
+              <Textarea
+                id="business_description"
+                placeholder="Tell customers what you sell..."
+                value={formData.business_description}
+                onChange={(e) => updateFormData("business_description", e.target.value)}
+                disabled={!isEditing}
+                rows={3}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="business_address">Street Address</Label>

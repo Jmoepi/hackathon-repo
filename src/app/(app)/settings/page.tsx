@@ -18,6 +18,7 @@ import {
   getDefaultFrontendSettings,
   type FrontendSettings,
 } from "@/lib/supabase/services/settings";
+import { StitchBankDetailsForm } from "./components/stitch-bank-details-form";
 import {
   Settings,
   Sun,
@@ -468,6 +469,9 @@ export default function SettingsPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Bank Details for Payouts */}
+        <StitchBankDetailsForm />
 
         {/* Regional Settings */}
         <Card className="border-0 shadow-lg lg:col-span-2">

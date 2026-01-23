@@ -53,18 +53,29 @@ export async function createDefaultSettings(userId: string): Promise<Settings | 
     payment_default_method: 'cash',
   };
 
-  const { data, error } = await supabase
-    .from('settings')
-    .insert(defaultSettings)
-    .select()
-    .single();
+  try {
+    const { data, error } = await supabase
+      .from('settings')
+      .insert(defaultSettings)
+      .select()
+      .single();
 
-  if (error) {
-    console.error('Error creating default settings:', error);
+    if (error) {
+      // Log the full error details
+      console.error('Error creating default settings:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+      });
+      return null;
+    }
+
+    return data;
+  } catch (err) {
+    console.error('Exception creating default settings:', err);
     return null;
   }
-
-  return data;
 }
 
 /**

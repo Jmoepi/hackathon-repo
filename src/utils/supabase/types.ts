@@ -23,6 +23,7 @@ export interface Database {
           date_of_birth: string | null;
           business_name: string;
           business_type: string | null;
+          business_description: string | null;
           business_address: string | null;
           business_city: string | null;
           business_province: string | null;
@@ -31,6 +32,12 @@ export interface Database {
           vat_number: string | null;
           receipt_header: string | null;
           receipt_footer: string | null;
+          // Bank details for Stitch Money payments
+          bank_code: string | null;
+          bank_name: string | null;
+          account_number: string | null;
+          account_name: string | null;
+          account_type: string | null;
         };
         Insert: {
           id: string;
@@ -45,6 +52,7 @@ export interface Database {
           date_of_birth?: string | null;
           business_name: string;
           business_type?: string | null;
+          business_description?: string | null;
           business_address?: string | null;
           business_city?: string | null;
           business_province?: string | null;
@@ -53,6 +61,12 @@ export interface Database {
           vat_number?: string | null;
           receipt_header?: string | null;
           receipt_footer?: string | null;
+          // Bank details for Stitch Money payments
+          bank_code?: string | null;
+          bank_name?: string | null;
+          account_number?: string | null;
+          account_name?: string | null;
+          account_type?: string | null;
         };
         Update: {
           id?: string;
@@ -67,6 +81,7 @@ export interface Database {
           date_of_birth?: string | null;
           business_name?: string;
           business_type?: string | null;
+          business_description?: string | null;
           business_address?: string | null;
           business_city?: string | null;
           business_province?: string | null;
@@ -75,6 +90,12 @@ export interface Database {
           vat_number?: string | null;
           receipt_header?: string | null;
           receipt_footer?: string | null;
+          // Bank details for Stitch Money payments
+          bank_code?: string | null;
+          bank_name?: string | null;
+          account_number?: string | null;
+          account_name?: string | null;
+          account_type?: string | null;
         };
       };
       products: {

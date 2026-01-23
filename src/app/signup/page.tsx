@@ -131,6 +131,49 @@ export default function SignupPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<FormData>(initialFormData);
+  const [passwordStrength, setPasswordStrength] = useState<{
+    score: number;
+    label: string;
+    color: string;
+    requirements: { met: boolean; text: string }[];
+  }>({ score: 0, label: "", color: "", requirements: [] });
+
+  // Password strength checker
+  const checkPasswordStrength = (password: string) => {
+    const requirements = [
+      { met: password.length >= 8, text: "At least 8 characters" },
+      { met: /[A-Z]/.test(password), text: "One uppercase letter" },
+      { met: /[a-z]/.test(password), text: "One lowercase letter" },
+      { met: /[0-9]/.test(password), text: "One number" },
+      { met: /[^A-Za-z0-9]/.test(password), text: "One special character (!@#$%^&*)" },
+    ];
+
+    const score = requirements.filter((r) => r.met).length;
+
+    let label = "";
+    let color = "";
+
+    if (password.length === 0) {
+      label = "";
+      color = "";
+    } else if (score <= 2) {
+      label = "Weak";
+      color = "text-red-500";
+    } else if (score <= 3) {
+      label = "Medium";
+      color = "text-yellow-500";
+    } else if (score === 4) {
+      label = "Strong";
+      color = "text-blue-500";
+    } else {
+      label = "Very Strong";
+      color = "text-emerald-500";
+    }
+
+    setPasswordStrength({ score, label, color, requirements });
+  };
+
+  const isPasswordStrong = passwordStrength.score >= 4;
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -152,8 +195,16 @@ export default function SignupPage() {
           toast({ variant: "destructive", title: "Please fill in all required fields" });
           return false;
         }
-        if (!formData.password || formData.password.length < 8) {
-          toast({ variant: "destructive", title: "Password must be at least 8 characters" });
+        if (!formData.password) {
+          toast({ variant: "destructive", title: "Please enter a password" });
+          return false;
+        }
+        if (!isPasswordStrong) {
+          toast({ 
+            variant: "destructive", 
+            title: "Password is too weak",
+            description: "Your password must have at least 8 characters, one uppercase, one lowercase, one number, and one special character."
+          });
           return false;
         }
         if (formData.password !== formData.confirmPassword) {
@@ -458,7 +509,10 @@ export default function SignupPage() {
                         type={showPassword ? "text" : "password"}
                         placeholder="Min. 8 characters"
                         value={formData.password}
-                        onChange={(e) => updateForm("password", e.target.value)}
+                        onChange={(e) => {
+                          updateForm("password", e.target.value);
+                          checkPasswordStrength(e.target.value);
+                        }}
                         className="h-12 border-slate-700 bg-slate-800/50 pl-11 pr-11 text-white placeholder:text-slate-500"
                       />
                       <button
@@ -469,6 +523,54 @@ export default function SignupPage() {
                         {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                       </button>
                     </div>
+                    {/* Password Strength Indicator */}
+                    {formData.password && (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-slate-400">Password Strength:</span>
+                          <span className={`text-xs font-semibold ${passwordStrength.color}`}>
+                            {passwordStrength.label}
+                          </span>
+                        </div>
+                        {/* Strength Bar */}
+                        <div className="flex gap-1">
+                          {[1, 2, 3, 4, 5].map((level) => (
+                            <div
+                              key={level}
+                              className={`h-1.5 flex-1 rounded-full transition-all ${
+                                level <= passwordStrength.score
+                                  ? passwordStrength.score <= 2
+                                    ? "bg-red-500"
+                                    : passwordStrength.score <= 3
+                                    ? "bg-yellow-500"
+                                    : passwordStrength.score === 4
+                                    ? "bg-blue-500"
+                                    : "bg-emerald-500"
+                                  : "bg-slate-700"
+                              }`}
+                            />
+                          ))}
+                        </div>
+                        {/* Requirements List */}
+                        <div className="grid grid-cols-1 gap-1 text-xs">
+                          {passwordStrength.requirements.map((req, idx) => (
+                            <div
+                              key={idx}
+                              className={`flex items-center gap-1.5 ${
+                                req.met ? "text-emerald-400" : "text-slate-500"
+                              }`}
+                            >
+                              {req.met ? (
+                                <CheckCircle2 className="h-3 w-3" />
+                              ) : (
+                                <div className="h-3 w-3 rounded-full border border-slate-600" />
+                              )}
+                              {req.text}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="confirmPassword" className="text-slate-200">Confirm Password *</Label>
@@ -490,6 +592,26 @@ export default function SignupPage() {
                         {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                       </button>
                     </div>
+                    {/* Password Match Indicator */}
+                    {formData.confirmPassword && (
+                      <div className={`flex items-center gap-1.5 text-xs ${
+                        formData.password === formData.confirmPassword
+                          ? "text-emerald-400"
+                          : "text-red-400"
+                      }`}>
+                        {formData.password === formData.confirmPassword ? (
+                          <>
+                            <CheckCircle2 className="h-3 w-3" />
+                            Passwords match
+                          </>
+                        ) : (
+                          <>
+                            <div className="h-3 w-3 rounded-full border border-red-500" />
+                            Passwords do not match
+                          </>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

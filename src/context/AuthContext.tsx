@@ -100,13 +100,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
         .single()
 
       if (error) {
-        console.error("Error fetching profile:", error)
+        // PGRST116 means no rows found - profile doesn't exist yet (not an error)
+        if (error.code === 'PGRST116') {
+          console.log("Profile not found for user, will be created on first update")
+          return null
+        }
+        // Log actual error details for debugging
+        console.warn("Error fetching profile:", {
+          message: error.message || "Unknown error",
+          code: error.code,
+          details: error.details,
+        })
         return null
       }
 
       return data as Profile
-    } catch (error) {
-      console.error("Error fetching profile:", error)
+    } catch (err) {
+      // Handle unexpected errors gracefully
+      const errorMessage = err instanceof Error ? err.message : "Unknown error"
+      console.warn("Exception fetching profile:", errorMessage)
       return null
     }
   }, [supabase])
@@ -124,7 +136,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const initializeAuth = async () => {
       try {
         // Get initial session
-        const { data: { session: initialSession } } = await supabase.auth.getSession()
+        const { data: { session: initialSession }, error: sessionError } = await supabase.auth.getSession()
+        
+        if (sessionError) {
+          console.warn("Error getting session:", sessionError.message || "Unknown error")
+          setIsLoading(false)
+          return
+        }
         
         if (initialSession?.user) {
           setSession(initialSession)
@@ -132,8 +150,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
           const profileData = await fetchProfile(initialSession.user.id)
           setProfile(profileData)
         }
-      } catch (error) {
-        console.error("Error initializing auth:", error)
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : "Unknown error"
+        console.warn("Error initializing auth:", errorMessage)
       } finally {
         setIsLoading(false)
       }
@@ -145,18 +164,27 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       async (event: any, currentSession: any) => {
-        setSession(currentSession)
-        setUser(currentSession?.user ?? null)
+        try {
+          setSession(currentSession)
+          setUser(currentSession?.user ?? null)
 
-        if (currentSession?.user) {
-          // Fetch profile when user signs in
-          const profileData = await fetchProfile(currentSession.user.id)
-          setProfile(profileData)
-        } else {
-          setProfile(null)
+          if (currentSession?.user) {
+            // Fetch profile when user signs in
+            const profileData = await fetchProfile(currentSession.user.id)
+            setProfile(profileData)
+          } else {
+            setProfile(null)
+          }
+        } catch (err) {
+          const errorMessage = err instanceof Error ? err.message : "Unknown error"
+          console.warn("Error in auth state change:", errorMessage)
+          // Still clear profile on error to prevent stale data
+          if (!currentSession?.user) {
+            setProfile(null)
+          }
+        } finally {
+          setIsLoading(false)
         }
-
-        setIsLoading(false)
       }
     )
 
@@ -271,6 +299,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (data.user && data.session) {
         const metadata = data.user.user_metadata || {}
         
+        // Also try to get additional data from localStorage (saved during signup)
+        let registrationData: Record<string, string | boolean> | null = null
+        try {
+          const savedProfile = localStorage.getItem("tradahub-profile")
+          if (savedProfile) {
+            registrationData = JSON.parse(savedProfile)
+          }
+        } catch (e) {
+          console.warn("Could not parse registration data:", e)
+        }
+        
         // Check if profile already exists
         const { data: existingProfile } = await supabase
           .from("profiles")
@@ -282,15 +321,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
           const profileData: ProfileInsert = {
             id: data.user.id,
             email: data.user.email || email,
-            business_name: metadata.business_name || "My Business",
-            first_name: metadata.first_name,
-            last_name: metadata.last_name,
-            phone: metadata.phone,
-            business_type: metadata.business_type,
-            business_address: metadata.business_address,
-            vat_number: metadata.vat_number,
-            receipt_header: metadata.receipt_header,
-            receipt_footer: metadata.receipt_footer,
+            business_name: metadata.business_name || registrationData?.businessName as string || "My Business",
+            first_name: metadata.first_name || registrationData?.firstName as string,
+            last_name: metadata.last_name || registrationData?.lastName as string,
+            phone: metadata.phone || registrationData?.phone as string,
+            business_type: metadata.business_type || registrationData?.businessType as string,
+            business_description: registrationData?.businessDescription as string,
+            business_address: metadata.business_address || registrationData?.streetAddress as string,
+            business_city: registrationData?.city as string,
+            business_province: registrationData?.province as string,
+            business_postal_code: registrationData?.postalCode as string,
+            business_phone: registrationData?.businessPhone as string,
+            id_number: registrationData?.idNumber as string,
+            date_of_birth: registrationData?.dateOfBirth as string,
+            vat_number: metadata.vat_number || registrationData?.vatNumber as string,
+            receipt_header: metadata.receipt_header || registrationData?.receiptHeader as string,
+            receipt_footer: metadata.receipt_footer || registrationData?.receiptFooter as string,
           }
 
           const { error: profileError } = await supabase
@@ -299,6 +345,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
           if (profileError) {
             console.error("Error creating profile after OTP verification:", profileError.message)
+          } else {
+            // Clear registration data from localStorage after successful profile creation
+            localStorage.removeItem("tradahub-profile")
           }
         }
 
